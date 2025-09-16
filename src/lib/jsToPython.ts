@@ -60,26 +60,19 @@ export function jsToPython(code: string): string {
   const originalLines = pyCode.split("\n");
   let indentLevel = 0;
   let resultLines: string[] = [];
-  let indentStack: number[] = [];
+  let blockLevels: number[] = [];
 
   for (let i = 0; i < originalLines.length; i++) {
     let line = originalLines[i].trim();
 
     // Detectar inicio de bloque por ":"
     if (line.endsWith(":") && !line.startsWith("#")) {
-      resultLines.push("    ".repeat(indentLevel) + line);
-      indentStack.push(indentLevel);
-      indentLevel++;
-      continue;
-    }
-
-    // else/elif al nivel anterior
-    if (/^(elif|else:)/.test(line)) {
-      if (indentStack.length > 0) {
-        indentLevel = indentStack[indentStack.length - 1];
+      // Si es elif o else, baja la indentación al nivel del último bloque padre
+      if (/^(elif|else:)/.test(line)) {
+        indentLevel = blockLevels.length > 0 ? blockLevels[blockLevels.length - 1] : 0;
       }
       resultLines.push("    ".repeat(indentLevel) + line);
-      indentStack.push(indentLevel);
+      blockLevels.push(indentLevel);
       indentLevel++;
       continue;
     }
@@ -90,28 +83,21 @@ export function jsToPython(code: string): string {
       continue;
     }
 
-    // Si la línea es una variable fuera de bloque, no indentar
-    if (/^[a-zA-Z_]\w*\s*=/.test(line) && indentLevel === 0) {
-      resultLines.push(line);
-      continue;
-    }
-
-    // Si la línea es un bucle o condicional fuera de bloque, no indentar
-    if ((/^while\s+/.test(line) || /^for\s+/.test(line)) && indentLevel === 0) {
-      resultLines.push(line);
-      continue;
-    }
-
-    // Si la línea no está en bloque y la indentación es mayor a 0, baja la indentación
-    if (indentLevel > 0 && (
-      /^[a-zA-Z_]\w*\s*=/.test(line) ||
-      /^while\s+/.test(line) ||
-      /^for\s+/.test(line)
-    )) {
-      indentLevel = 0;
-      indentStack = [];
-      resultLines.push(line);
-      continue;
+    // Si la línea está fuera de bloque, baja la indentación
+    if (
+      blockLevels.length > 0 &&
+      !originalLines[i - 1]?.trim().endsWith(":") &&
+      !/^(elif|else:)/.test(originalLines[i - 1]?.trim())
+      && indentLevel > 0
+      && (
+        /^[a-zA-Z_]\w*\s*=/.test(line) ||
+        /^while\s+/.test(line) ||
+        /^for\s+/.test(line) ||
+        /^print\(/.test(line)
+      )
+    ) {
+      indentLevel = blockLevels[0];
+      blockLevels = [];
     }
 
     resultLines.push("    ".repeat(indentLevel) + line);
