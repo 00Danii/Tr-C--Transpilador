@@ -31,8 +31,10 @@ export function jsToPython(code: string): string {
   pyCode = pyCode.replace(/(\w+)\s*--/g, "$1 -= 1");
 
   // if, else if, else
-  pyCode = pyCode.replace(/if\s*\((.*?)\)\s*\{/g, "if $1:");
   pyCode = pyCode.replace(/else if\s*\((.*?)\)\s*\{/g, "elif $1:");
+  
+  pyCode = pyCode.replace(/if\s*\((.*?)\)\s*\{/g, "if $1:");
+
   pyCode = pyCode.replace(/else\s*\{/g, "else:");
 
   // while
@@ -69,7 +71,8 @@ export function jsToPython(code: string): string {
     if (line.endsWith(":") && !line.startsWith("#")) {
       // Si es elif o else, baja la indentación al nivel del último bloque padre
       if (/^(elif|else:)/.test(line)) {
-        indentLevel = blockLevels.length > 0 ? blockLevels[blockLevels.length - 1] : 0;
+        indentLevel =
+          blockLevels.length > 0 ? blockLevels[blockLevels.length - 1] : 0;
       }
       resultLines.push("    ".repeat(indentLevel) + line);
       blockLevels.push(indentLevel);
@@ -87,14 +90,12 @@ export function jsToPython(code: string): string {
     if (
       blockLevels.length > 0 &&
       !originalLines[i - 1]?.trim().endsWith(":") &&
-      !/^(elif|else:)/.test(originalLines[i - 1]?.trim())
-      && indentLevel > 0
-      && (
-        /^[a-zA-Z_]\w*\s*=/.test(line) ||
+      !/^(elif|else:)/.test(originalLines[i - 1]?.trim()) &&
+      indentLevel > 0 &&
+      (/^[a-zA-Z_]\w*\s*=/.test(line) ||
         /^while\s+/.test(line) ||
         /^for\s+/.test(line) ||
-        /^print\(/.test(line)
-      )
+        /^print\(/.test(line))
     ) {
       indentLevel = blockLevels[0];
       blockLevels = [];
