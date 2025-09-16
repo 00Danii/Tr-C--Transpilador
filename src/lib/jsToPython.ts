@@ -1,76 +1,129 @@
 export function jsToPython(code: string): string {
   let pyCode = code;
 
-  // 1. Eliminar comentarios de línea (// → #)
+  // Comentarios
   pyCode = pyCode.replace(/\/\/(.*)/g, "# $1");
-
-  // 2. Eliminar comentarios de bloque (/* ... */ → # ...)
   pyCode = pyCode.replace(/\/\*([\s\S]*?)\*\//g, (match, p1) =>
-    p1.split("\n").map((line: string) => `# ${line.trim()}`).join("\n")
+    p1
+      .split("\n")
+      .map((line: string) => `# ${line.trim()}`)
+      .join("\n")
   );
 
-  // 3. Convertir declaración de función
+  // Funciones
   pyCode = pyCode.replace(
     /function\s+(\w+)\s*\(([^)]*)\)\s*\{/g,
     (match, name, args) => `def ${name}(${args.replace(/,/g, ", ")}):`
   );
 
-  // 4. console.log → print
+  // console.log
   pyCode = pyCode.replace(/console\.log\((.*?)\);?/g, "print($1)");
 
-  // 5. Variables: let/const/var → asignación simple
+  // Variables
   pyCode = pyCode.replace(/\b(let|const|var)\s+(\w+)\s*=\s*(.*?);/g, "$2 = $3");
 
-  // 6. if (...) { → if ...:
+  // Operadores de comparación
+  pyCode = pyCode.replace(/===/g, "==");
+  pyCode = pyCode.replace(/!==/g, "!=");
+
+  // Incrementos y decrementos
+  pyCode = pyCode.replace(/(\w+)\s*\+\+/g, "$1 += 1");
+  pyCode = pyCode.replace(/(\w+)\s*--/g, "$1 -= 1");
+
+  // if, else if, else
   pyCode = pyCode.replace(/if\s*\((.*?)\)\s*\{/g, "if $1:");
-
-  // 7. else if (...) { → elif ...:
   pyCode = pyCode.replace(/else if\s*\((.*?)\)\s*\{/g, "elif $1:");
-
-  // 8. else { → else:
   pyCode = pyCode.replace(/else\s*\{/g, "else:");
 
-  // 9. while (...) { → while ...:
+  // while
   pyCode = pyCode.replace(/while\s*\((.*?)\)\s*\{/g, "while $1:");
 
-  // 10. for (let i = 0; i < n; i++) { → for i in range(0, n):
+  // for clásico JS → for Python (mejorado)
   pyCode = pyCode.replace(
-    /for\s*\(\s*let\s+(\w+)\s*=\s*(\d+);\s*\1\s*<\s*(\w+);\s*\1\+\+\s*\)\s*\{/g,
+    /for\s*\(\s*(?:let|var)?\s*(\w+)\s*=\s*(\d+);\s*\1\s*<\s*(\d+);\s*\1\s*(?:\+\+|=\s*\1\s*\+\s*1)\s*\)\s*\{/g,
     "for $1 in range($2, $3):"
   );
 
-  // 11. Eliminar llaves de cierre
+  // Eliminar paréntesis de for y while que no se transformaron
+  pyCode = pyCode.replace(
+    /for\s*\((.*?)\)\s*\{/g,
+    "# [NO SOPORTADO] for ($1):"
+  );
+
+  // Eliminar llaves de cierre
   pyCode = pyCode.replace(/\}/g, "");
 
-  // 12. Eliminar punto y coma
+  // Eliminar punto y coma
   pyCode = pyCode.replace(/;/g, "");
 
-  // 13. Indentación automática (muy simplificada)
-  // Indenta después de ":" hasta encontrar una línea sin indentación
-  const lines = pyCode.split("\n");
+  // Indentación mejorada
+  const originalLines = pyCode.split("\n");
   let indentLevel = 0;
-  for (let i = 0; i < lines.length; i++) {
-    let line = lines[i].trim();
+  let resultLines: string[] = [];
+  let indentStack: number[] = [];
 
-    if (line.match(/^(else:|elif|else if)/)) {
-      // else/elif deben mantener indentación del bloque anterior
-      indentLevel = Math.max(indentLevel - 1, 0);
-    }
+  for (let i = 0; i < originalLines.length; i++) {
+    let line = originalLines[i].trim();
 
-    if (line.endsWith(":")) {
-      lines[i] = "    ".repeat(indentLevel) + line;
+    // Detectar inicio de bloque por ":"
+    if (line.endsWith(":") && !line.startsWith("#")) {
+      resultLines.push("    ".repeat(indentLevel) + line);
+      indentStack.push(indentLevel);
       indentLevel++;
-    } else {
-      lines[i] = "    ".repeat(indentLevel) + line;
+      continue;
     }
 
-    if (line === "") continue;
-    if (line.startsWith("#")) continue;
-  }
-  pyCode = lines.join("\n");
+    // else/elif al nivel anterior
+    if (/^(elif|else:)/.test(line)) {
+      if (indentStack.length > 0) {
+        indentLevel = indentStack[indentStack.length - 1];
+      }
+      resultLines.push("    ".repeat(indentLevel) + line);
+      indentStack.push(indentLevel);
+      indentLevel++;
+      continue;
+    }
 
-  // 14. Limpiar prints vacíos redundantes
+    // Si la línea es vacía o comentario, no indentar
+    if (line === "" || line.startsWith("#")) {
+      resultLines.push(line);
+      continue;
+    }
+
+    // Si la línea es una variable fuera de bloque, no indentar
+    if (/^[a-zA-Z_]\w*\s*=/.test(line) && indentLevel === 0) {
+      resultLines.push(line);
+      continue;
+    }
+
+    // Si la línea es un bucle o condicional fuera de bloque, no indentar
+    if ((/^while\s+/.test(line) || /^for\s+/.test(line)) && indentLevel === 0) {
+      resultLines.push(line);
+      continue;
+    }
+
+    // Si la línea no está en bloque y la indentación es mayor a 0, baja la indentación
+    if (indentLevel > 0 && (
+      /^[a-zA-Z_]\w*\s*=/.test(line) ||
+      /^while\s+/.test(line) ||
+      /^for\s+/.test(line)
+    )) {
+      indentLevel = 0;
+      indentStack = [];
+      resultLines.push(line);
+      continue;
+    }
+
+    resultLines.push("    ".repeat(indentLevel) + line);
+  }
+
+  pyCode = resultLines.join("\n");
+
+  // Limpiar prints vacíos redundantes
   pyCode = pyCode.replace(/print\(\s*\)/g, "print()");
 
-  return pyCode.trim();
+  // Eliminar espacios en blanco al inicio y final
+  pyCode = pyCode.trim();
+
+  return pyCode;
 }
