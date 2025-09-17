@@ -109,7 +109,7 @@ export function CodeTranspiler() {
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 pb-12 space-y-8">
         <Card className="border-0 shadow-2xl bg-card/80 backdrop-blur-sm">
-          <CardContent className="p-8">
+          <CardContent className="">
             <div className="flex flex-col lg:flex-row items-center gap-6">
               <LanguageSelector
                 label="Lenguaje de origen"
