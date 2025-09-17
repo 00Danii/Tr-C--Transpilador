@@ -1,9 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import React from "react";
+import { useTheme } from "next-themes";
+import CodeMirror from "@uiw/react-codemirror";
+import { materialInit } from "@uiw/codemirror-theme-material";
+import { xcodeLight } from "@uiw/codemirror-theme-xcode";
+
+import { javascript } from "@codemirror/lang-javascript";
+import { python } from "@codemirror/lang-python";
 
 interface Props {
   title: string;
@@ -33,6 +39,33 @@ export function CodeArea({
   placeholder,
   children,
 }: Props) {
+  // Selecciona el lenguaje para CodeMirror
+  const getLanguageExtension = () => {
+    switch (languageLabel.toLowerCase()) {
+      case "python":
+        return python();
+      case "javascript":
+      case "typescript":
+        return javascript();
+      default:
+        return javascript();
+    }
+  };
+
+  const { theme } = useTheme();
+  // Selecciona el tema de CodeMirror según el tema actual
+  // Alterna el fondo y el tema según el modo
+  const codeMirrorTheme =
+    theme === "dark"
+      ? materialInit({
+          settings: {
+            caret: "#ffffff",
+            background: "#151518",
+            gutterBackground: "#151518",
+          },
+        })
+      : xcodeLight;
+
   return (
     <Card className="group hover:shadow-2xl transition-all duration-500 border-0 bg-card/80 backdrop-blur-sm overflow-hidden">
       <div className={`px-6 py-4 border-b`}>
@@ -67,12 +100,23 @@ export function CodeArea({
       </div>
       <CardContent className="p-0">
         <div className="relative">
-          <Textarea
-            placeholder={placeholder}
+          <CodeMirror
             value={value}
-            onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-            readOnly={readOnly}
-            className="min-h-[500px] font-mono text-sm resize-none border-0 focus-visible:ring-0 bg-background/50 backdrop-blur-sm p-6 leading-relaxed"
+            height="500px"
+            theme={codeMirrorTheme}
+            extensions={[getLanguageExtension()]}
+            readOnly={!!readOnly}
+            onChange={(val) => onChange?.(val)}
+            basicSetup={{
+              lineNumbers: true,
+              foldGutter: false,
+              highlightActiveLine: true,
+            }}
+            style={{
+              fontSize: "17px",
+              fontFamily: "Fira Mono, Menlo, Monaco, 'Courier New', monospace",
+            }}
+            placeholder={placeholder}
           />
           {children}
         </div>
