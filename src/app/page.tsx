@@ -12,10 +12,8 @@ export default function Home() {
           <img
             src="/Tr-C.svg"
             alt="Logo CodeTranspiler"
-            className="h-10 md:h-14 invert dark:invert-0"
+            className="h-5 md:h-6 invert dark:invert-0"
           />
-
-          <ToggleTheme />
           <ToggleTheme />
         </div>
       </header>
