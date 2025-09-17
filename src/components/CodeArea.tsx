@@ -12,7 +12,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 
 interface Props {
-  title: string;
+  title: React.ReactNode;
   languageLabel: string;
   languageGradient: string;
   value: string;
@@ -68,19 +68,13 @@ export function CodeArea({
 
   return (
     <Card className="group hover:shadow-2xl transition-all duration-500 border-0 bg-card/80 backdrop-blur-sm overflow-hidden">
-      <div className={`px-6 py-4 border-b`}>
+      <div className={`px-6 pb-4 border-b`}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-nowrap">
             <div
               className={`w-3 h-3 rounded-full bg-gradient-to-r ${languageGradient} animate-pulse`}
             />
-            <span className="font-bold text-card-foreground">{title}</span>
-            <Badge
-              variant="secondary"
-              className={`bg-gradient-to-r ${languageGradient} text-white border-0 shadow-lg`}
-            >
-              {languageLabel}
-            </Badge>
+            {title}
           </div>
           <div className="flex items-center gap-2">
             {showCopy && onCopy && (

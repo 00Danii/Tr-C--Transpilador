@@ -108,35 +108,21 @@ export function CodeTranspiler() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 pb-12 space-y-8">
-        <Card className="border-0 shadow-2xl bg-card/80 backdrop-blur-sm">
-          <CardContent className="">
-            <div className="flex flex-col lg:flex-row items-center gap-6">
-              <LanguageSelector
-                label="Lenguaje de origen"
-                value={inputLanguage}
-                onChange={setInputLanguage}
-                languages={PROGRAMMING_LANGUAGES}
-              />
-
-              <SwapButton
-                onClick={handleSwapLanguages}
-                showAnimation={showAnimation}
-              />
-
-              {/* Output Language */}
-              <LanguageSelector
-                label="Lenguaje de destino"
-                value={outputLanguage}
-                onChange={setOutputLanguage}
-                languages={PROGRAMMING_LANGUAGES}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <CodeArea
-            title="Código de entrada"
+            title={
+              <div className="flex items-center gap-2 flex-nowrap min-w-0">
+                <span className="whitespace-nowrap">Código de entrada</span>
+                <div className="min-w-0 max-w-[160px]">
+                  <LanguageSelector
+                    label=""
+                    value={inputLanguage}
+                    onChange={setInputLanguage}
+                    languages={PROGRAMMING_LANGUAGES}
+                  />
+                </div>
+              </div>
+            }
             languageLabel={getLanguageLabel(inputLanguage)}
             languageGradient={getLanguageGradient(inputLanguage)}
             value={inputCode}
@@ -145,20 +131,23 @@ export function CodeTranspiler() {
             placeholder={`Escribe o pega tu código ${getLanguageLabel(
               inputLanguage
             )} aquí...`}
-          >
-            {!inputCode && (
-              <div className="absolute inset-6 flex items-center justify-center pointer-events-none">
-                <div className="text-center space-y-3 text-muted-foreground">
-                  <Code2 className="h-12 w-12 mx-auto opacity-30" />
-                  <p className="text-lg">Comienza escribiendo tu código aquí</p>
-                </div>
-              </div>
-            )}
-          </CodeArea>
+          ></CodeArea>
 
           {/* Output Code Area */}
           <CodeArea
-            title="Código transpilado"
+            title={
+              <div className="flex items-center gap-2 flex-nowrap min-w-0">
+                <span className="whitespace-nowrap">Código de salida</span>
+                <div className="min-w-0 max-w-[160px]">
+                  <LanguageSelector
+                    label=""
+                    value={outputLanguage}
+                    onChange={setOutputLanguage}
+                    languages={PROGRAMMING_LANGUAGES}
+                  />
+                </div>
+              </div>
+            }
             languageLabel={getLanguageLabel(outputLanguage)}
             languageGradient={getLanguageGradient(outputLanguage)}
             value={outputCode}
@@ -166,7 +155,7 @@ export function CodeTranspiler() {
             showCopy={!!outputCode}
             onCopy={handleCopyToClipboard}
             icon={<Sparkles className="h-5 w-5 text-secondary/60" />}
-            placeholder="El código transpilado aparecerá aquí mágicamente..."
+            placeholder="El código transpilado se mostrará aquí ..."
           >
             {!outputCode && !isTranspiling && (
               <div className="absolute inset-6 flex items-center justify-center pointer-events-none">
