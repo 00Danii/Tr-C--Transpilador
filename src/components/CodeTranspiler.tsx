@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Code2, AlertCircle, Sparkles, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -155,6 +154,12 @@ export function CodeTranspiler() {
             showCopy={!!outputCode}
             onCopy={handleCopyToClipboard}
             icon={<Sparkles className="h-5 w-5 text-secondary/60" />}
+            swapButton={
+              <SwapButton
+                onClick={handleSwapLanguages}
+                disabled={isTranspiling}
+              />
+            }
             placeholder="El código transpilado se mostrará aquí ..."
           >
             {!outputCode && !isTranspiling && (

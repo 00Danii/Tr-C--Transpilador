@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copy } from "lucide-react";
 import React from "react";
@@ -24,6 +23,7 @@ interface Props {
   placeholder?: string;
   isTranspiling?: boolean;
   children?: React.ReactNode;
+  swapButton?: React.ReactNode;
 }
 
 export function CodeArea({
@@ -38,6 +38,7 @@ export function CodeArea({
   icon,
   placeholder,
   children,
+  swapButton,
 }: Props) {
   // Selecciona el lenguaje para CodeMirror
   const getLanguageExtension = () => {
@@ -71,6 +72,7 @@ export function CodeArea({
       <div className={`px-6 pb-4 border-b`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-nowrap">
+            {swapButton}
             <div
               className={`w-3 h-3 rounded-full bg-gradient-to-r ${languageGradient} animate-pulse`}
             />
