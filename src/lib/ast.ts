@@ -9,7 +9,8 @@ export type Statement =
   | ReturnStatement
   | ExpressionStatement
   | VariableDeclaration
-  | CommentStatement;
+  | CommentStatement
+  | IfStatement;
 
 export type FunctionDeclaration = {
   type: "FunctionDeclaration";
@@ -67,4 +68,11 @@ export type CallExpression = {
 export type CommentStatement = {
   type: "CommentStatement";
   value: string;
+};
+
+export type IfStatement = {
+  type: "IfStatement";
+  test: Expression;
+  consequent: Statement[];
+  alternate?: Statement | IfStatement;
 };

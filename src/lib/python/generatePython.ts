@@ -44,6 +44,49 @@ export function generatePython(node: Program | Statement | Expression): string {
     case "CommentStatement":
       return `# ${node.value}`;
 
+    case "IfStatement": {
+      // Helper para alternates anidados
+      function handleAlternate(alt: any): string {
+        if (alt.type === "IfStatement" && alt.test.type !== "Literal") {
+          // elif
+          let code = `elif ${generatePython(alt.test)}:\n`;
+          code += alt.consequent
+            .map((s: Statement) => "    " + generatePython(s))
+            .join("\n");
+          if (alt.alternate) {
+            code += handleAlternate(alt.alternate);
+          }
+          return "\n" + code;
+        } else if (alt.type === "IfStatement" && alt.test.type === "Literal") {
+          // else
+          let code = `else:\n`;
+          code += alt.consequent
+            .map((s: Statement) => "    " + generatePython(s))
+            .join("\n");
+          return "\n" + code;
+        } else if (Array.isArray(alt)) {
+          // else como array de statements
+          let code = `else:\n`;
+          code += alt
+            .map((s: Statement) => "    " + generatePython(s))
+            .join("\n");
+          return "\n" + code;
+        } else {
+          // else como statement único
+          return `\nelse:\n    ${generatePython(alt)}`;
+        }
+      }
+
+      let code = `if ${generatePython(node.test)}:\n`;
+      code += node.consequent
+        .map((s: Statement) => "    " + generatePython(s))
+        .join("\n");
+      if (node.alternate) {
+        code += handleAlternate(node.alternate);
+      }
+      return code;
+    }
+
     default:
       return "# [NO SOPORTADO]";
   }

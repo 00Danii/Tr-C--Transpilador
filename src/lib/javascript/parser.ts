@@ -7,6 +7,7 @@ import {
   ReturnStatement,
   Expression,
   ExpressionStatement,
+  IfStatement,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -40,11 +41,17 @@ export function parse(tokens: Token[]): Program {
       consume();
       return { type: "CommentStatement", value: String(token.value) };
     }
+
     if (token.type === "CONSOLE_LOG") {
       return parseConsoleLog();
     }
+
     if (token.type === "FUNCTION") return parseFunctionDeclaration();
+
     if (token.type === "RETURN") return parseReturnStatement();
+
+    if (token.type === "IF") return parseIfStatement();
+
     if (
       token.type === "IDENTIFIER" &&
       ["let", "const", "var"].includes(token.value as string)
@@ -52,6 +59,44 @@ export function parse(tokens: Token[]): Program {
       return parseVariableDeclaration();
     }
     return parseExpressionStatement();
+  }
+
+  function parseIfStatement(): IfStatement {
+    consume("IF");
+    consume("PUNCTUATION"); // (
+    const test = parseExpression();
+    consume("PUNCTUATION"); // )
+    consume("PUNCTUATION"); // {
+    const consequent: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      consequent.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+
+    let alternate: Statement | IfStatement | undefined;
+    if (peek() && peek().type === "ELSE") {
+      consume("ELSE");
+      if (peek() && peek().type === "IF") {
+        alternate = parseIfStatement(); // else if
+      } else {
+        consume("PUNCTUATION"); // {
+        const elseBody: Statement[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === "}")
+        ) {
+          elseBody.push(parseStatement());
+        }
+        consume("PUNCTUATION"); // }
+        alternate = {
+          type: "IfStatement",
+          test: { type: "Literal", value: 1 }, // else: test siempre true
+          consequent: elseBody,
+        };
+      }
+    }
+
+    return { type: "IfStatement", test, consequent, alternate };
   }
 
   function parseConsoleLog(): ExpressionStatement {
