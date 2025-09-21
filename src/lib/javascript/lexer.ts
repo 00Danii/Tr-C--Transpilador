@@ -7,6 +7,7 @@ export function tokenize(input: string): Token[] {
     [/^\s+/, null], // espacios en blanco
     [/^\/\/.*/, "LINE_COMMENT"],
     [/^\/\*[\s\S]*?\*\//, "BLOCK_COMMENT"],
+    [/^console\.log/, "CONSOLE_LOG"],
     [/^\bfunction\b/, "FUNCTION"],
     [/^\bif\b/, "IF"],
     [/^\belse\b/, "ELSE"],

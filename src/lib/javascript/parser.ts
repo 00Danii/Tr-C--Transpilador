@@ -40,6 +40,9 @@ export function parse(tokens: Token[]): Program {
       consume();
       return { type: "CommentStatement", value: String(token.value) };
     }
+    if (token.type === "CONSOLE_LOG") {
+      return parseConsoleLog();
+    }
     if (token.type === "FUNCTION") return parseFunctionDeclaration();
     if (token.type === "RETURN") return parseReturnStatement();
     if (
@@ -49,6 +52,30 @@ export function parse(tokens: Token[]): Program {
       return parseVariableDeclaration();
     }
     return parseExpressionStatement();
+  }
+
+  function parseConsoleLog(): ExpressionStatement {
+    consume("CONSOLE_LOG");
+    consume("PUNCTUATION"); // (
+    const args: Expression[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === ")")) {
+      args.push(parseExpression());
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+        consume("PUNCTUATION");
+      }
+    }
+    consume("PUNCTUATION"); // )
+    if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+      consume("PUNCTUATION");
+    }
+    return {
+      type: "ExpressionStatement",
+      expression: {
+        type: "CallExpression",
+        callee: { type: "Identifier", name: "print" },
+        arguments: args,
+      },
+    };
   }
 
   function parseFunctionDeclaration(): FunctionDeclaration {
