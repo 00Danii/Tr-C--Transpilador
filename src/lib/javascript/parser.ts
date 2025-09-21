@@ -14,8 +14,8 @@ import {
 export function parse(tokens: Token[]): Program {
   let current = 0;
 
-  function peek() {
-    return tokens[current];
+  function peek(n = 0) {
+    return tokens[current + n];
   }
 
   function consume(type?: string): Token {
@@ -54,6 +54,52 @@ export function parse(tokens: Token[]): Program {
     if (token.type === "IF") return parseIfStatement();
 
     if (token.type === "WHILE") return parseWhileStatement();
+
+    // x++;
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "INCREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("INCREMENT");
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "+",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+
+    // x--;
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "DECREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("DECREMENT");
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "-",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
 
     if (
       token.type === "IDENTIFIER" &&
