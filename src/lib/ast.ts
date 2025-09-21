@@ -1,0 +1,64 @@
+// common/ast.ts
+export type Program = {
+  type: "Program";
+  body: Statement[];
+};
+
+export type Statement =
+  | FunctionDeclaration
+  | ReturnStatement
+  | ExpressionStatement
+  | VariableDeclaration;
+
+export type FunctionDeclaration = {
+  type: "FunctionDeclaration";
+  name: string;
+  params: string[];
+  body: Statement[];
+};
+
+export type ReturnStatement = {
+  type: "ReturnStatement";
+  argument: Expression;
+};
+
+export type ExpressionStatement = {
+  type: "ExpressionStatement";
+  expression: Expression;
+};
+
+export type Expression =
+  | BinaryExpression
+  | Identifier
+  | Literal
+  | CallExpression;
+
+export type BinaryExpression = {
+  type: "BinaryExpression";
+  operator: string;
+  left: Expression;
+  right: Expression;
+};
+
+export type Identifier = {
+  type: "Identifier";
+  name: string;
+};
+
+export type Literal = {
+  type: "Literal";
+  value: string | number;
+};
+
+export type VariableDeclaration = {
+  type: "VariableDeclaration";
+  kind: string; // let, const, var
+  name: string;
+  value: Expression;
+};
+
+export type CallExpression = {
+  type: "CallExpression";
+  callee: Identifier;
+  arguments: Expression[];
+};

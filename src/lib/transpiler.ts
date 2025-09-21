@@ -1,17 +1,23 @@
-import { jsToPython } from "./jsToPython";
-import { pythonToJs } from "./pythonToJs";
+import { tokenize as jsTokenize } from "@/lib/javascript/lexer";
+import { parse as jsParse } from "@/lib/javascript/parser";
+import { generatePython } from "./python/generatePython";
 
 export function transpileCode(
   code: string,
   fromLang: string,
   toLang: string
 ): string {
-  if (fromLang === "javascript" && toLang === "python") {
-    return jsToPython(code);
+  try {
+    if (fromLang === "javascript" && toLang === "python") {
+      const tokens = jsTokenize(code);
+      console.log(tokens);
+      const ast = jsParse(tokens);
+      console.log(ast);
+      return generatePython(ast);
+    }
+    // Otros casos...
+    return "// Transpilación no soportada para estos lenguajes.";
+  } catch (err: any) {
+    return `// Error: ${err.message}`;
   }
-  if (fromLang === "python" && toLang === "javascript") {
-    return pythonToJs(code);
-  }
-  // Aquí agregar más conversiones
-  return "// Transpilación no soportada para estos lenguajes.";
 }
