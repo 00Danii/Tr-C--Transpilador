@@ -18,9 +18,9 @@ export function parse(tokens: Token[]): Program {
 
   function consume(type?: string): Token {
     const token = tokens[current];
-    if (!token) throw new Error("Unexpected end of input");
+    if (!token) throw new Error("Fin inesperada de la entrada");
     if (type && token.type !== type) {
-      throw new Error(`Expected ${type}, got ${token.type}`);
+      throw new Error(`Se esperaba ${type}, pero se obtuvo ${token.type}`);
     }
     current++;
     return token;
@@ -146,7 +146,7 @@ export function parse(tokens: Token[]): Program {
       return { type: "Identifier", name: String(token.value) };
     }
 
-    throw new Error(`Unexpected token: ${token.type}`);
+    throw new Error(`Token inesperado: ${token.type}, valor: ${token.value}`);
   }
 
   return parseProgram();
