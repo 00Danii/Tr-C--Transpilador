@@ -10,7 +10,8 @@ export type Statement =
   | ExpressionStatement
   | VariableDeclaration
   | CommentStatement
-  | IfStatement;
+  | IfStatement
+  | WhileStatement;
 
 export type FunctionDeclaration = {
   type: "FunctionDeclaration";
@@ -75,4 +76,10 @@ export type IfStatement = {
   test: Expression;
   consequent: Statement[];
   alternate?: Statement | IfStatement;
+};
+
+export type WhileStatement = {
+  type: "WhileStatement";
+  test: Expression;
+  body: Statement[];
 };

@@ -8,6 +8,7 @@ import {
   Expression,
   ExpressionStatement,
   IfStatement,
+  WhileStatement,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -52,6 +53,8 @@ export function parse(tokens: Token[]): Program {
 
     if (token.type === "IF") return parseIfStatement();
 
+    if (token.type === "WHILE") return parseWhileStatement();
+
     if (
       token.type === "IDENTIFIER" &&
       ["let", "const", "var"].includes(token.value as string)
@@ -59,6 +62,20 @@ export function parse(tokens: Token[]): Program {
       return parseVariableDeclaration();
     }
     return parseExpressionStatement();
+  }
+
+  function parseWhileStatement(): WhileStatement {
+    consume("WHILE");
+    consume("PUNCTUATION"); // (
+    const test = parseExpression();
+    consume("PUNCTUATION"); // )
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    return { type: "WhileStatement", test, body };
   }
 
   function parseIfStatement(): IfStatement {

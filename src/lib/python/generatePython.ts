@@ -87,6 +87,11 @@ export function generatePython(node: Program | Statement | Expression): string {
       return code;
     }
 
+    case "WhileStatement":
+      return `while ${generatePython(node.test)}:\n${node.body
+        .map((s: Statement) => "    " + generatePython(s))
+        .join("\n")}`;
+
     default:
       return "# [NO SOPORTADO]";
   }
