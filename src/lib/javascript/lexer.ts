@@ -5,8 +5,8 @@ export function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
   const tokenSpec: [RegExp, string | null][] = [
     [/^\s+/, null], // espacios en blanco
-    [/^\/\/.*/, null], // comentarios de línea
-    [/^\/\*[\s\S]*?\*\//, null], // comentarios multilínea
+    [/^\/\/.*/, "LINE_COMMENT"],
+    [/^\/\*[\s\S]*?\*\//, "BLOCK_COMMENT"],
     [/^\bfunction\b/, "FUNCTION"],
     [/^\bif\b/, "IF"],
     [/^\belse\b/, "ELSE"],
@@ -33,6 +33,17 @@ export function tokenize(input: string): Token[] {
             tokens.push({ type, value: Number(result[0]) });
           } else if (type === "STRING") {
             tokens.push({ type, value: result[0].slice(1, -1) }); // sin comillas
+          } else if (type === "LINE_COMMENT") {
+            tokens.push({ type, value: result[0].slice(2).trim() }); // quita //
+          } else if (type === "BLOCK_COMMENT") {
+            // Quita /* y */ y separa por líneas
+            const lines = result[0]
+              .slice(2, -2)
+              .split("\n")
+              .map((l) => l.trim());
+            lines.forEach((line) =>
+              tokens.push({ type: "BLOCK_COMMENT", value: line })
+            );
           } else {
             tokens.push({ type, value: result[0] });
           }

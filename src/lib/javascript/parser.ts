@@ -36,6 +36,10 @@ export function parse(tokens: Token[]): Program {
 
   function parseStatement(): Statement {
     const token = peek();
+    if (token.type === "LINE_COMMENT" || token.type === "BLOCK_COMMENT") {
+      consume();
+      return { type: "CommentStatement", value: String(token.value) };
+    }
     if (token.type === "FUNCTION") return parseFunctionDeclaration();
     if (token.type === "RETURN") return parseReturnStatement();
     if (

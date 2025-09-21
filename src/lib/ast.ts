@@ -8,7 +8,8 @@ export type Statement =
   | FunctionDeclaration
   | ReturnStatement
   | ExpressionStatement
-  | VariableDeclaration;
+  | VariableDeclaration
+  | CommentStatement;
 
 export type FunctionDeclaration = {
   type: "FunctionDeclaration";
@@ -61,4 +62,9 @@ export type CallExpression = {
   type: "CallExpression";
   callee: Identifier;
   arguments: Expression[];
+};
+
+export type CommentStatement = {
+  type: "CommentStatement";
+  value: string;
 };

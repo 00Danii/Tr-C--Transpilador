@@ -41,6 +41,9 @@ export function generatePython(node: Program | Statement | Expression): string {
         .map(generatePython)
         .join(", ")})`;
 
+    case "CommentStatement":
+      return `# ${node.value}`;
+
     default:
       return "# [NO SOPORTADO]";
   }
