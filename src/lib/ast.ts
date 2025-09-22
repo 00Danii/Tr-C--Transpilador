@@ -1,4 +1,3 @@
-// common/ast.ts
 export type Program = {
   type: "Program";
   body: Statement[];

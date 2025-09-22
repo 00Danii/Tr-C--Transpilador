@@ -1,4 +1,3 @@
-// lexer.ts
 export type Token = { type: string; value: string | number };
 
 export function tokenize(input: string): Token[] {

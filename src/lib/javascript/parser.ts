@@ -1,4 +1,3 @@
-// js/parser.ts
 import { Token } from "./lexer";
 import {
   Program,
