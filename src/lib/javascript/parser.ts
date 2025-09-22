@@ -9,6 +9,7 @@ import {
   ExpressionStatement,
   IfStatement,
   WhileStatement,
+  ForStatement,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -54,6 +55,8 @@ export function parse(tokens: Token[]): Program {
     if (token.type === "IF") return parseIfStatement();
 
     if (token.type === "WHILE") return parseWhileStatement();
+
+    if (token.type === "FOR") return parseForStatement();
 
     // x++;
     if (token.type === "IDENTIFIER" && peek(1)?.type === "INCREMENT") {
@@ -108,6 +111,113 @@ export function parse(tokens: Token[]): Program {
       return parseVariableDeclaration();
     }
     return parseExpressionStatement();
+  }
+
+  function parseForInitOrUpdate(): Statement | null {
+    const token = peek();
+    if (
+      !token ||
+      (token.type === "PUNCTUATION" &&
+        (token.value === ";" || token.value === ")"))
+    ) {
+      return null;
+    }
+    // x++
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "INCREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("INCREMENT");
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "+",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+    // x--
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "DECREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("DECREMENT");
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "-",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+    // VariableDeclaration
+    if (
+      token.type === "IDENTIFIER" &&
+      ["let", "const", "var"].includes(token.value as string)
+    ) {
+      const kind = consume("IDENTIFIER").value;
+      const name = String(consume("IDENTIFIER").value);
+      consume("OPERATOR"); // =
+      const value = parseExpression();
+      return {
+        type: "VariableDeclaration",
+        kind: String(kind),
+        name,
+        value,
+      };
+    }
+    // ExpressionStatement
+    const expr = parseExpression();
+    return { type: "ExpressionStatement", expression: expr };
+  }
+
+  function parseForStatement(): ForStatement {
+    consume("FOR");
+    consume("PUNCTUATION"); // (
+    let init: Statement | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ";")) {
+      init = parseForInitOrUpdate();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION"); // <-- consume el punto y coma después de init
+      }
+    } else {
+      consume("PUNCTUATION"); // <-- consume el punto y coma si init está vacío
+    }
+    let test: Expression | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ";")) {
+      test = parseExpression();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION"); // <-- consume el punto y coma después de test
+      }
+    } else {
+      consume("PUNCTUATION"); // <-- consume el punto y coma si test está vacío
+    }
+    let update: Statement | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ")")) {
+      update = parseForInitOrUpdate();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ")") {
+        consume("PUNCTUATION"); // <-- consume el paréntesis después de update
+      }
+    } else {
+      consume("PUNCTUATION"); // <-- consume el paréntesis si update está vacío
+    }
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    return { type: "ForStatement", init, test, update, body };
   }
 
   function parseWhileStatement(): WhileStatement {

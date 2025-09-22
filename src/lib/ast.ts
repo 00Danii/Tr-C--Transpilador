@@ -11,7 +11,8 @@ export type Statement =
   | VariableDeclaration
   | CommentStatement
   | IfStatement
-  | WhileStatement;
+  | WhileStatement
+  | ForStatement;
 
 export type FunctionDeclaration = {
   type: "FunctionDeclaration";
@@ -81,5 +82,13 @@ export type IfStatement = {
 export type WhileStatement = {
   type: "WhileStatement";
   test: Expression;
+  body: Statement[];
+};
+
+export type ForStatement = {
+  type: "ForStatement";
+  init: Statement | null;
+  test: Expression | null;
+  update: Statement | null;
   body: Statement[];
 };

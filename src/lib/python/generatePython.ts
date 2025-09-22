@@ -92,6 +92,59 @@ export function generatePython(node: Program | Statement | Expression): string {
         .map((s: Statement) => "    " + generatePython(s))
         .join("\n")}`;
 
+    case "ForStatement": {
+      // Soporta for clásico:
+      //   for (let i = 0; i < N; i++)
+      // y for (i = 0; i < N; i++)
+      let varName: string | undefined;
+      let start: string | undefined;
+
+      if (node.init && node.init.type === "VariableDeclaration") {
+        varName = node.init.name;
+        start = generatePython(node.init.value);
+      } else if (
+        node.init &&
+        node.init.type === "ExpressionStatement" &&
+        node.init.expression.type === "BinaryExpression" &&
+        node.init.expression.operator === "=" &&
+        node.init.expression.left.type === "Identifier"
+      ) {
+        varName = node.init.expression.left.name;
+        start = generatePython(node.init.expression.right);
+      }
+
+      if (
+        varName &&
+        start !== undefined &&
+        node.test &&
+        node.test.type === "BinaryExpression" &&
+        node.test.operator === "<" &&
+        node.test.left.type === "Identifier" &&
+        node.test.left.name === varName &&
+        node.update &&
+        node.update.type === "ExpressionStatement" &&
+        node.update.expression.type === "BinaryExpression" &&
+        node.update.expression.operator === "=" &&
+        node.update.expression.left.type === "Identifier" &&
+        node.update.expression.left.name === varName &&
+        node.update.expression.right.type === "BinaryExpression" &&
+        node.update.expression.right.operator === "+" &&
+        node.update.expression.right.left.type === "Identifier" &&
+        node.update.expression.right.left.name === varName &&
+        node.update.expression.right.right.type === "Literal" &&
+        node.update.expression.right.right.value === 1
+      ) {
+        const end = generatePython(node.test.right);
+        let code = `for ${varName} in range(${start}, ${end}):\n`;
+        code += node.body
+          .map((s: Statement) => "    " + generatePython(s))
+          .join("\n");
+        return code;
+      }
+      // Otros tipos de for no soportados
+      return "# [NO SOPORTADO: for]";
+    }
+
     default:
       return "# [NO SOPORTADO]";
   }
