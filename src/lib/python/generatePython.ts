@@ -145,6 +145,16 @@ export function generatePython(node: Program | Statement | Expression): string {
       return "# [NO SOPORTADO: for]";
     }
 
+    case "DoWhileStatement": {
+      // Simula do...while usando while True y break
+      let code = "while True:\n";
+      code += node.body
+        .map((s: Statement) => "    " + generatePython(s))
+        .join("\n");
+      code += `\n    if not (${generatePython(node.test)}):\n        break`;
+      return code;
+    }
+
     default:
       return "# [NO SOPORTADO]";
   }

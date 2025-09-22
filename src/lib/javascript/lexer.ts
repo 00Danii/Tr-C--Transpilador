@@ -11,6 +11,7 @@ export function tokenize(input: string): Token[] {
     [/^\bfunction\b/, "FUNCTION"],
     [/^\bif\b/, "IF"],
     [/^\belse\b/, "ELSE"],
+    [/^\bdo\b/, "DO"],
     [/^\bwhile\b/, "WHILE"],
     [/^\bfor\b/, "FOR"],
     [/^\breturn\b/, "RETURN"],

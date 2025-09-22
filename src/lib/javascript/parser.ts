@@ -10,6 +10,7 @@ import {
   IfStatement,
   WhileStatement,
   ForStatement,
+  DoWhileStatement,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -53,6 +54,8 @@ export function parse(tokens: Token[]): Program {
     if (token.type === "RETURN") return parseReturnStatement();
 
     if (token.type === "IF") return parseIfStatement();
+
+    if (token.type === "DO") return parseDoWhileStatement();
 
     if (token.type === "WHILE") return parseWhileStatement();
 
@@ -111,6 +114,24 @@ export function parse(tokens: Token[]): Program {
       return parseVariableDeclaration();
     }
     return parseExpressionStatement();
+  }
+
+  function parseDoWhileStatement(): DoWhileStatement {
+    consume("DO");
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    consume("WHILE");
+    consume("PUNCTUATION"); // (
+    const test = parseExpression();
+    consume("PUNCTUATION"); // )
+    if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+      consume("PUNCTUATION");
+    }
+    return { type: "DoWhileStatement", body, test };
   }
 
   function parseForInitOrUpdate(): Statement | null {

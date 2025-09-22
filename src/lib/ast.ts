@@ -12,7 +12,8 @@ export type Statement =
   | CommentStatement
   | IfStatement
   | WhileStatement
-  | ForStatement;
+  | ForStatement
+  | DoWhileStatement;
 
 export type FunctionDeclaration = {
   type: "FunctionDeclaration";
@@ -91,4 +92,10 @@ export type ForStatement = {
   test: Expression | null;
   update: Statement | null;
   body: Statement[];
+};
+
+export type DoWhileStatement = {
+  type: "DoWhileStatement";
+  body: Statement[];
+  test: Expression;
 };
