@@ -140,7 +140,7 @@ export function parse(tokens: Token[]): Program {
       }
       alternate = {
         type: "IfStatement",
-        test: { type: "Literal", value: 1 },
+        test: { type: "Literal", value: true },
         consequent: elseBody,
       };
     }

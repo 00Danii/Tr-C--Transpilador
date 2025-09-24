@@ -49,7 +49,17 @@ export function generateJs(node: Program | Statement | Expression): string {
       code += node.consequent.map((s) => "  " + generateJs(s)).join("");
       code += "}\n";
       if (node.alternate) {
-        if (node.alternate.type === "IfStatement") {
+        if (
+          node.alternate.type === "IfStatement" &&
+          node.alternate.test.type === "Literal" &&
+          node.alternate.test.value === true
+        ) {
+          // Es un else
+          code += `else {\n${node.alternate.consequent
+            .map((s) => "  " + generateJs(s))
+            .join("")}}\n`;
+        } else if (node.alternate.type === "IfStatement") {
+          // Es un else if
           code += `else ${generateJs(node.alternate)}`;
         } else {
           if (Array.isArray(node.alternate)) {
