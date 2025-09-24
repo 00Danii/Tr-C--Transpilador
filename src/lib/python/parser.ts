@@ -92,19 +92,15 @@ export function parse(tokens: Token[]): Program {
     }
     consume("PUNCTUATION"); // )
     consume("PUNCTUATION"); // :
-    // Cuerpo: parsea hasta dos saltos de línea seguidos o EOF
+    if (peek().type === "NEWLINE") consume("NEWLINE");
+    consume("INDENT"); // <-- Aquí empieza el bloque
     const body: Statement[] = [];
-    let newlineCount = 0;
-    while (current < tokens.length) {
-      if (peek().type === "NEWLINE") {
-        consume("NEWLINE");
-        newlineCount++;
-        if (newlineCount >= 2) break;
-        continue;
-      }
-      newlineCount = 0;
+    while (peek() && peek().type !== "DEDENT") {
       body.push(parseStatement());
+      // Opcional: consume saltos de línea entre statements
+      while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     }
+    consume("DEDENT"); // <-- Aquí termina el bloque
     return { type: "FunctionDeclaration", name, params, body };
   }
 
