@@ -118,24 +118,67 @@ export function parse(tokens: Token[]): Program {
     consume("IF");
     const test = parseExpression();
     consume("PUNCTUATION"); // :
+    if (peek().type === "NEWLINE") consume("NEWLINE");
     const consequent: Statement[] = [];
-    while (
-      peek() &&
-      peek().type !== "ELIF" &&
-      peek().type !== "ELSE" &&
-      peek().type !== "NEWLINE"
-    ) {
+    // Parsea el cuerpo hasta encontrar ELIF, ELSE o EOF
+    while (peek() && peek().type !== "ELIF" && peek().type !== "ELSE") {
+      if (peek().type === "NEWLINE") {
+        consume("NEWLINE");
+        continue;
+      }
       consequent.push(parseStatement());
     }
     let alternate: Statement | IfStatement | undefined;
     if (peek() && peek().type === "ELIF") {
       consume("ELIF");
-      alternate = parseIfStatement();
+      const elifTest = parseExpression();
+      consume("PUNCTUATION"); // :
+      if (peek().type === "NEWLINE") consume("NEWLINE");
+      const elifConsequent: Statement[] = [];
+      while (peek() && peek().type !== "ELIF" && peek().type !== "ELSE") {
+        if (peek().type === "NEWLINE") {
+          consume("NEWLINE");
+          continue;
+        }
+        elifConsequent.push(parseStatement());
+      }
+      let elifAlternate: Statement | IfStatement | undefined;
+      if (peek() && peek().type === "ELIF") {
+        elifAlternate = parseIfStatement();
+      } else if (peek() && peek().type === "ELSE") {
+        consume("ELSE");
+        consume("PUNCTUATION"); // :
+        if (peek().type === "NEWLINE") consume("NEWLINE");
+        const elseBody: Statement[] = [];
+        while (peek()) {
+          if (peek().type === "NEWLINE") {
+            consume("NEWLINE");
+            continue;
+          }
+          elseBody.push(parseStatement());
+        }
+        elifAlternate = {
+          type: "IfStatement",
+          test: { type: "Literal", value: true },
+          consequent: elseBody,
+        };
+      }
+      alternate = {
+        type: "IfStatement",
+        test: elifTest,
+        consequent: elifConsequent,
+        alternate: elifAlternate,
+      };
     } else if (peek() && peek().type === "ELSE") {
       consume("ELSE");
       consume("PUNCTUATION"); // :
+      if (peek().type === "NEWLINE") consume("NEWLINE");
       const elseBody: Statement[] = [];
-      while (peek() && peek().type !== "NEWLINE") {
+      while (peek()) {
+        if (peek().type === "NEWLINE") {
+          consume("NEWLINE");
+          continue;
+        }
         elseBody.push(parseStatement());
       }
       alternate = {
