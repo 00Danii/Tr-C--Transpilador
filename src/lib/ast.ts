@@ -35,7 +35,8 @@ export type Expression =
   | BinaryExpression
   | Identifier
   | Literal
-  | CallExpression;
+  | CallExpression
+  | UnaryExpression;
 
 export type BinaryExpression = {
   type: "BinaryExpression";
@@ -97,4 +98,10 @@ export type DoWhileStatement = {
   type: "DoWhileStatement";
   body: Statement[];
   test: Expression;
+};
+
+export type UnaryExpression = {
+  type: "UnaryExpression";
+  operator: string;
+  argument: Expression;
 };

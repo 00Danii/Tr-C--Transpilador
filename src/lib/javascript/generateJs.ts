@@ -117,6 +117,12 @@ export function generateJs(node: Program | Statement | Expression): string {
         node.right
       )}`;
 
+    case "UnaryExpression":
+      if (node.operator === "not") {
+        return `!${generateJs(node.argument)}`;
+      }
+      return `${node.operator}${generateJs(node.argument)}`;
+
     default:
       return "// [NO SOPORTADO]\n";
   }

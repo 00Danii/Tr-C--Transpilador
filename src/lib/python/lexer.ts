@@ -20,6 +20,7 @@ export function tokenize(input: string): Token[] {
     [/^\b\d+\b/, "NUMBER"],
     [/^"[^"]*"/, "STRING"],
     [/^'[^']*'/, "STRING"],
+    [/^\bnot\b/, "OPERATOR"],
     [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
     [/^[\+\-\*\/=<>!]+/, "OPERATOR"],
     [/^[:,\(\)\[\]\{\}]/, "PUNCTUATION"],

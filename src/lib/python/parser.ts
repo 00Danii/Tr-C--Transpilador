@@ -229,9 +229,26 @@ export function parse(tokens: Token[]): Program {
       consume();
       return { type: "Literal", value: token.value };
     }
+    if (token.type === "TRUE") {
+      consume();
+      return { type: "Literal", value: true };
+    }
+    if (token.type === "FALSE") {
+      consume();
+      return { type: "Literal", value: false };
+    }
     if (token.type === "IDENTIFIER") {
       consume();
       return { type: "Identifier", name: String(token.value) } as Identifier;
+    }
+    if (token.type === "OPERATOR" && token.value === "not") {
+      consume();
+      const argument = parsePrimary();
+      return {
+        type: "UnaryExpression",
+        operator: "not",
+        argument,
+      };
     }
     throw new Error(`Token inesperado: ${token.type}, valor: ${token.value}`);
   }
