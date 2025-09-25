@@ -41,7 +41,6 @@ export function parse(tokens: Token[]): Program {
   function parseStatement(): Statement | undefined {
     while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     const token = peek();
-    console.log("first", token);
     if (!token) return; // para evitar errores al final
     if (token.type === "LINE_COMMENT") {
       consume();
