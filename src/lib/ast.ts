@@ -89,9 +89,13 @@ export type WhileStatement = {
 
 export type ForStatement = {
   type: "ForStatement";
-  init: Statement | null;
-  test: Expression | null;
-  update: Statement | null;
+  // Js
+  init?: Statement | null;
+  test?: Expression | null;
+  update?: Statement | null;
+  // Python 
+  varName?: string;
+  rangeExpr?: Expression;
   body: Statement[];
 };
 

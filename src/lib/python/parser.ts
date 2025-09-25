@@ -236,12 +236,20 @@ export function parse(tokens: Token[]): Program {
     consume("IN");
     const rangeExpr = parseExpression();
     consume("PUNCTUATION"); // :
+    while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+    consume("INDENT");
     const body: Statement[] = [];
-    while (peek() && peek().type !== "NEWLINE") {
-      body.push(parseStatement());
+    while (peek() && peek().type !== "DEDENT") {
+      while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      if (peek() && peek().type !== "DEDENT") {
+        body.push(parseStatement());
+      }
     }
+    consume("DEDENT");
     return {
       type: "ForStatement",
+      varName,
+      rangeExpr,
       init: null,
       test: null,
       update: null,
@@ -303,8 +311,37 @@ export function parse(tokens: Token[]): Program {
       return { type: "Literal", value: false };
     }
     if (token.type === "IDENTIFIER") {
+      const id = {
+        type: "Identifier",
+        name: String(token.value),
+      } as Identifier;
       consume();
-      return { type: "Identifier", name: String(token.value) } as Identifier;
+      // Si sigue un paréntesis, es una llamada a función
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
+        consume("PUNCTUATION"); // (
+        const args: Expression[] = [];
+        if (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          args.push(parseExpression());
+          while (
+            peek() &&
+            peek().type === "PUNCTUATION" &&
+            peek().value === ","
+          ) {
+            consume("PUNCTUATION");
+            args.push(parseExpression());
+          }
+        }
+        consume("PUNCTUATION"); // )
+        return {
+          type: "CallExpression",
+          callee: id,
+          arguments: args,
+        };
+      }
+      return id;
     }
     if (token.type === "OPERATOR" && token.value === "not") {
       consume();

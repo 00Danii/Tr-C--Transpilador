@@ -80,16 +80,19 @@ export function generateJs(node: Program | Statement | Expression): string {
         .join("")}}\n`;
 
     case "ForStatement": {
-      // Solo soporta for clásico
-      let init = node.init ? generateJs(node.init).replace(/\n/g, "") : "";
-      let test = node.test ? generateJs(node.test) : "";
-      let update = node.update
-        ? generateJs(node.update).replace(/\n/g, "")
-        : "";
-      let code = `for (${init} ${test}; ${update}) {\n`;
-      code += node.body.map((s) => "  " + generateJs(s)).join("");
-      code += "}\n";
-      return code;
+      if (node.varName && node.rangeExpr) {
+        if (
+          node.rangeExpr.type === "CallExpression" &&
+          node.rangeExpr.callee.name === "range"
+        ) {
+          const args = node.rangeExpr.arguments.map(generateJs).join(", ");
+          let code = `for (${node.varName} = 0; ${node.varName} < ${args}; ${node.varName}++) {\n`;
+          code += node.body.map((s) => "  " + generateJs(s)).join("");
+          code += "}\n";
+          return code;
+        }
+      }
+      return "// [NO SOPORTADO: for]\n";
     }
 
     case "CommentStatement":
