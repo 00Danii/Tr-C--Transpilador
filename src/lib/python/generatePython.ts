@@ -1,7 +1,7 @@
 import { Program, Statement, Expression } from "../ast";
 
 export function generatePython(node: Program | Statement | Expression): string {
-  switch (node.type) {
+  switch (node?.type) {
     case "Program":
       return node.body.map(generatePython).join("\n");
 
