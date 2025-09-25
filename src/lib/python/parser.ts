@@ -42,7 +42,7 @@ export function parse(tokens: Token[]): Program {
     while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     const token = peek();
     console.log("first", token);
-    if (!token) return; // <-- agrega esto para evitar errores al final
+    if (!token) return; // para evitar errores al final
     if (token.type === "LINE_COMMENT") {
       consume();
       return { type: "CommentStatement", value: String(token.value) };
@@ -52,7 +52,7 @@ export function parse(tokens: Token[]): Program {
     if (token.type === "IF") return parseIfStatement();
     if (token.type === "WHILE") return parseWhileStatement();
     if (token.type === "FOR") return parseForStatement();
-    // Asignación: x = 10
+
     if (
       token.type === "IDENTIFIER" &&
       peek(1)?.type === "OPERATOR" &&
@@ -144,30 +144,42 @@ export function parse(tokens: Token[]): Program {
       consume("ELIF");
       const elifTest = parseExpression();
       consume("PUNCTUATION"); // :
-      if (peek().type === "NEWLINE") consume("NEWLINE");
+      if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      consume("INDENT");
       const elifConsequent: Statement[] = [];
-      while (peek() && peek().type !== "ELIF" && peek().type !== "ELSE") {
-        if (peek().type === "NEWLINE") {
-          consume("NEWLINE");
-          continue;
+      while (
+        peek() &&
+        peek().type !== "DEDENT" &&
+        peek().type !== "ELIF" &&
+        peek().type !== "ELSE"
+      ) {
+        while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+        if (
+          peek() &&
+          peek().type !== "DEDENT" &&
+          peek().type !== "ELIF" &&
+          peek().type !== "ELSE"
+        ) {
+          elifConsequent.push(parseStatement());
         }
-        elifConsequent.push(parseStatement());
       }
+      consume("DEDENT");
       let elifAlternate: Statement | IfStatement | undefined;
       if (peek() && peek().type === "ELIF") {
         elifAlternate = parseIfStatement();
       } else if (peek() && peek().type === "ELSE") {
         consume("ELSE");
         consume("PUNCTUATION"); // :
-        if (peek().type === "NEWLINE") consume("NEWLINE");
+        if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+        consume("INDENT");
         const elseBody: Statement[] = [];
-        while (peek()) {
-          if (peek().type === "NEWLINE") {
-            consume("NEWLINE");
-            continue;
+        while (peek() && peek().type !== "DEDENT") {
+          while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+          if (peek() && peek().type !== "DEDENT") {
+            elseBody.push(parseStatement());
           }
-          elseBody.push(parseStatement());
         }
+        consume("DEDENT");
         elifAlternate = {
           type: "IfStatement",
           test: { type: "Literal", value: true },
@@ -183,15 +195,16 @@ export function parse(tokens: Token[]): Program {
     } else if (peek() && peek().type === "ELSE") {
       consume("ELSE");
       consume("PUNCTUATION"); // :
-      if (peek().type === "NEWLINE") consume("NEWLINE");
+      if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      consume("INDENT");
       const elseBody: Statement[] = [];
-      while (peek()) {
-        if (peek().type === "NEWLINE") {
-          consume("NEWLINE");
-          continue;
+      while (peek() && peek().type !== "DEDENT") {
+        while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+        if (peek() && peek().type !== "DEDENT") {
+          elseBody.push(parseStatement());
         }
-        elseBody.push(parseStatement());
       }
+      consume("DEDENT");
       alternate = {
         type: "IfStatement",
         test: { type: "Literal", value: true },
