@@ -31,14 +31,18 @@ export function parse(tokens: Token[]): Program {
 
   function parseProgram(): Program {
     const body: Statement[] = [];
-    while (current < tokens.length) {
-      body.push(parseStatement());
+    while (peek()) {
+      const stmt = parseStatement();
+      if (stmt) body.push(stmt);
     }
-    return { type: "Program", body };
+    return { type: "Program", body: body.filter(Boolean) };
   }
 
-  function parseStatement(): Statement {
+  function parseStatement(): Statement | undefined {
+    while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     const token = peek();
+    console.log("first", token);
+    if (!token) return; // <-- agrega esto para evitar errores al final
     if (token.type === "LINE_COMMENT") {
       consume();
       return { type: "CommentStatement", value: String(token.value) };
@@ -84,21 +88,22 @@ export function parse(tokens: Token[]): Program {
     const name = String(consume("IDENTIFIER").value);
     consume("PUNCTUATION"); // (
     const params: string[] = [];
-    while (peek().type !== "PUNCTUATION" || peek().value !== ")") {
+    while (peek() && (peek().type !== "PUNCTUATION" || peek().value !== ")")) {
       params.push(String(consume("IDENTIFIER").value));
-      if (peek().type === "PUNCTUATION" && peek().value === ",") {
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
         consume("PUNCTUATION");
       }
     }
     consume("PUNCTUATION"); // )
     consume("PUNCTUATION"); // :
-    if (peek().type === "NEWLINE") consume("NEWLINE");
+    if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     consume("INDENT"); // <-- Aquí empieza el bloque
     const body: Statement[] = [];
     while (peek() && peek().type !== "DEDENT") {
-      body.push(parseStatement());
-      // Opcional: consume saltos de línea entre statements
       while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      if (peek() && peek().type !== "DEDENT") {
+        body.push(parseStatement());
+      }
     }
     consume("DEDENT"); // <-- Aquí termina el bloque
     return { type: "FunctionDeclaration", name, params, body };
@@ -114,16 +119,26 @@ export function parse(tokens: Token[]): Program {
     consume("IF");
     const test = parseExpression();
     consume("PUNCTUATION"); // :
-    if (peek().type === "NEWLINE") consume("NEWLINE");
+    if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+    consume("INDENT");
     const consequent: Statement[] = [];
-    // Parsea el cuerpo hasta encontrar ELIF, ELSE o EOF
-    while (peek() && peek().type !== "ELIF" && peek().type !== "ELSE") {
-      if (peek().type === "NEWLINE") {
-        consume("NEWLINE");
-        continue;
+    while (
+      peek() &&
+      peek().type !== "DEDENT" &&
+      peek().type !== "ELIF" &&
+      peek().type !== "ELSE"
+    ) {
+      while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      if (
+        peek() &&
+        peek().type !== "DEDENT" &&
+        peek().type !== "ELIF" &&
+        peek().type !== "ELSE"
+      ) {
+        consequent.push(parseStatement());
       }
-      consequent.push(parseStatement());
     }
+    consume("DEDENT");
     let alternate: Statement | IfStatement | undefined;
     if (peek() && peek().type === "ELIF") {
       consume("ELIF");
@@ -190,18 +205,16 @@ export function parse(tokens: Token[]): Program {
     consume("WHILE");
     const test = parseExpression();
     consume("PUNCTUATION"); // :
+    if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+    consume("INDENT");
     const body: Statement[] = [];
-    let newlineCount = 0;
-    while (current < tokens.length) {
-      if (peek().type === "NEWLINE") {
-        consume("NEWLINE");
-        newlineCount++;
-        if (newlineCount >= 2) break;
-        continue;
+    while (peek() && peek().type !== "DEDENT") {
+      while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      if (peek() && peek().type !== "DEDENT") {
+        body.push(parseStatement());
       }
-      newlineCount = 0;
-      body.push(parseStatement());
     }
+    consume("DEDENT");
     return { type: "WhileStatement", test, body };
   }
 
@@ -263,6 +276,7 @@ export function parse(tokens: Token[]): Program {
   }
 
   function parsePrimary(): Expression {
+    while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     const token = peek();
     if (token.type === "NUMBER" || token.type === "STRING") {
       consume();

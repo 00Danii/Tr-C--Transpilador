@@ -12,7 +12,8 @@ export type Statement =
   | IfStatement
   | WhileStatement
   | ForStatement
-  | DoWhileStatement;
+  | DoWhileStatement
+  | undefined;
 
 export type FunctionDeclaration = {
   type: "FunctionDeclaration";

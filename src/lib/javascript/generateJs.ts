@@ -16,7 +16,7 @@ import {
 } from "../ast";
 
 export function generateJs(node: Program | Statement | Expression): string {
-  switch (node.type) {
+  switch (node?.type) {
     case "Program":
       return node.body.map(generateJs).join("");
 
