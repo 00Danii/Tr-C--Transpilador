@@ -93,16 +93,14 @@ export function generatePython(node: Program | Statement | Expression): string {
         .join("\n")}`;
 
     case "ForStatement": {
-      // Soporta for clásico:
-      //   for (let i = 0; i < N; i++)
-      // y for (i = 0; i < N; i++)
+      // Soporte para for clásico con incremento personalizado
       let varName: string | undefined;
       let start: string | undefined;
+      let end: string | undefined;
+      let step: string | undefined;
 
-      if (node.init && node.init.type === "VariableDeclaration") {
-        varName = node.init.name;
-        start = generatePython(node.init.value);
-      } else if (
+      // Detecta for (i = start; i < end; i += step)
+      if (
         node.init &&
         node.init.type === "ExpressionStatement" &&
         node.init.expression.type === "BinaryExpression" &&
@@ -114,13 +112,16 @@ export function generatePython(node: Program | Statement | Expression): string {
       }
 
       if (
-        varName &&
-        start !== undefined &&
         node.test &&
         node.test.type === "BinaryExpression" &&
         node.test.operator === "<" &&
         node.test.left.type === "Identifier" &&
-        node.test.left.name === varName &&
+        node.test.left.name === varName
+      ) {
+        end = generatePython(node.test.right);
+      }
+
+      if (
         node.update &&
         node.update.type === "ExpressionStatement" &&
         node.update.expression.type === "BinaryExpression" &&
@@ -131,16 +132,44 @@ export function generatePython(node: Program | Statement | Expression): string {
         node.update.expression.right.operator === "+" &&
         node.update.expression.right.left.type === "Identifier" &&
         node.update.expression.right.left.name === varName &&
-        node.update.expression.right.right.type === "Literal" &&
-        node.update.expression.right.right.value === 1
+        node.update.expression.right.right.type === "Literal"
       ) {
-        const end = generatePython(node.test.right);
-        let code = `for ${varName} in range(${start}, ${end}):\n`;
-        code += node.body
-          .map((s: Statement) => "    " + generatePython(s))
-          .join("\n");
-        return code;
+        step = generatePython(node.update.expression.right.right);
+      } else if (
+        node.update &&
+        node.update.type === "ExpressionStatement" &&
+        node.update.expression.type === "BinaryExpression" &&
+        node.update.expression.operator === "+=" &&
+        node.update.expression.left.type === "Identifier" &&
+        node.update.expression.left.name === varName &&
+        node.update.expression.right.type === "Literal"
+      ) {
+        step = generatePython(node.update.expression.right);
       }
+
+      if (
+        varName &&
+        start !== undefined &&
+        end !== undefined &&
+        step !== undefined
+      ) {
+        if (step === "1") {
+          // No mostrar el paso si es 1
+          let code = `for ${varName} in range(${start}, ${end}):\n`;
+          code += node.body
+            .map((s: Statement) => "    " + generatePython(s))
+            .join("\n");
+          return code;
+        } else {
+          // Mostrar el paso si es distinto de 1
+          let code = `for ${varName} in range(${start}, ${end}, ${step}):\n`;
+          code += node.body
+            .map((s: Statement) => "    " + generatePython(s))
+            .join("\n");
+          return code;
+        }
+      }
+
       // Otros tipos de for no soportados
       return "# [NO SOPORTADO: for]";
     }
