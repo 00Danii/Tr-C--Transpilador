@@ -80,17 +80,35 @@ export function generateJs(node: Program | Statement | Expression): string {
         .join("")}}\n`;
 
     case "ForStatement": {
-      if (node.varName && node.rangeExpr) {
-        if (
-          node.rangeExpr.type === "CallExpression" &&
-          node.rangeExpr.callee.name === "range"
-        ) {
-          const args = node.rangeExpr.arguments.map(generateJs).join(", ");
-          let code = `for (${node.varName} = 0; ${node.varName} < ${args}; ${node.varName}++) {\n`;
-          code += node.body.map((s) => "  " + generateJs(s)).join("");
-          code += "}\n";
-          return code;
+      if (
+        node.varName &&
+        node.rangeExpr &&
+        node.rangeExpr.type === "CallExpression" &&
+        node.rangeExpr.callee.name === "range"
+      ) {
+        const args = node.rangeExpr.arguments.map(generateJs);
+        let start = "0",
+          end = "0",
+          step = "1";
+        if (args.length === 1) {
+          // range(END)
+          start = "0";
+          end = args[0];
+        } else if (args.length === 2) {
+          // range(START, END)
+          start = args[0];
+          end = args[1];
+        } else if (args.length === 3) {
+          // range(START, END, STEP)
+          start = args[0];
+          end = args[1];
+          step = args[2];
         }
+        let cmp = step.startsWith("-") ? ">" : "<";
+        let code = `for (${node.varName} = ${start}; ${node.varName} ${cmp} ${end}; ${node.varName} += ${step}) {\n`;
+        code += node.body.map((s) => "  " + generateJs(s)).join("");
+        code += "}\n";
+        return code;
       }
       return "// [NO SOPORTADO: for]\n";
     }
