@@ -23,7 +23,7 @@ export function generateJs(node: Program | Statement | Expression): string {
     case "FunctionDeclaration":
       return `function ${node.name}(${node.params.join(", ")}) {\n${node.body
         .map((stmt) => "  " + generateJs(stmt).replace(/\n/g, ""))
-        .join("\n")}\n}`;
+        .join("\n")}\n}\n`;
 
     case "ReturnStatement":
       return `return ${generateJs(node.argument)};\n`;
