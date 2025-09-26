@@ -385,6 +385,17 @@ export function parse(tokens: Token[]): Program {
   function parsePrimary(): Expression {
     const token = peek();
 
+    // Soporte para números negativos
+    if (token.type === "OPERATOR" && token.value === "-") {
+      consume("OPERATOR");
+      const next = parsePrimary();
+      if (next.type === "Literal" && typeof next.value === "number") {
+        return { type: "Literal", value: -next.value };
+      }
+      // Si es una expresión, crea un UnaryExpression
+      return { type: "UnaryExpression", operator: "-", argument: next };
+    }
+
     if (token.type === "NUMBER" || token.type === "STRING") {
       consume();
       return { type: "Literal", value: token.value };
