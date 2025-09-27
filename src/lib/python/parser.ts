@@ -362,6 +362,22 @@ export function parse(tokens: Token[]): Program {
         argument,
       };
     }
+    
+    // Soporte para funciones lambda
+    if (token.type === "LAMBDA") {
+      consume("LAMBDA");
+      const params: string[] = [];
+      // Parsea los parámetros hasta encontrar ':'
+      while (peek() && peek().type === "IDENTIFIER") {
+        params.push(String(consume("IDENTIFIER").value));
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // :
+      const body = parseExpression();
+      return { type: "LambdaExpression", params, body };
+    }
     throw new Error(`Token inesperado: ${token.type}, valor: ${token.value}`);
   }
 

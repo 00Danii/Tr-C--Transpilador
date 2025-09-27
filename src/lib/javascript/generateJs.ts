@@ -38,6 +38,13 @@ export function generateJs(node: Program | Statement | Expression): string {
         node.expression.operator === "=" &&
         node.expression.left.type === "Identifier"
       ) {
+        // Si el lado derecho es una LambdaExpression, usa const
+        if (node.expression.right.type === "LambdaExpression") {
+          return `const ${node.expression.left.name} = ${generateJs(
+            node.expression.right
+          )};\n`;
+        }
+        
         return `${node.expression.left.name} = ${generateJs(
           node.expression.right
         )};\n`;
@@ -143,6 +150,9 @@ export function generateJs(node: Program | Statement | Expression): string {
         return `!${generateJs(node.argument)}`;
       }
       return `${node.operator}${generateJs(node.argument)}`;
+
+    case "LambdaExpression":
+      return `(${node.params.join(", ")}) => ${generateJs(node.body)}`;
 
     default:
       return "// [NO SOPORTADO]\n";

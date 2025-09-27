@@ -37,7 +37,8 @@ export type Expression =
   | Identifier
   | Literal
   | CallExpression
-  | UnaryExpression;
+  | UnaryExpression
+  | LambdaExpression;
 
 export type BinaryExpression = {
   type: "BinaryExpression";
@@ -93,7 +94,7 @@ export type ForStatement = {
   init?: Statement | null;
   test?: Expression | null;
   update?: Statement | null;
-  // Python 
+  // Python
   varName?: string;
   rangeExpr?: Expression;
   body: Statement[];
@@ -109,4 +110,10 @@ export type UnaryExpression = {
   type: "UnaryExpression";
   operator: string;
   argument: Expression;
+};
+
+export type LambdaExpression = {
+  type: "LambdaExpression";
+  params: string[];
+  body: Expression;
 };
