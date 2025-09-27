@@ -10,6 +10,7 @@ import {
   WhileStatement,
   ForStatement,
   Identifier,
+  TryStatement,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -78,10 +79,90 @@ export function parse(tokens: Token[]): Program {
       return parsePrintStatement();
     }
 
+    // Si es un bloque try
+    if (token.type === "TRY") return parseTryStatement();
+
     // Si es expresión simple
     return parseExpressionStatement();
   }
 
+  function parseTryStatement(): TryStatement {
+    consume("TRY");
+    consume("PUNCTUATION"); // :
+    if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+    consume("INDENT");
+    const block: Statement[] = [];
+    while (
+      peek() &&
+      peek().type !== "DEDENT" &&
+      peek().type !== "EXCEPT" &&
+      peek().type !== "FINALLY"
+    ) {
+      while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      if (
+        peek() &&
+        peek().type !== "DEDENT" &&
+        peek().type !== "EXCEPT" &&
+        peek().type !== "FINALLY"
+      ) {
+        block.push(parseStatement());
+      }
+    }
+    consume("DEDENT");
+
+    let handler;
+    if (peek() && peek().type === "EXCEPT") {
+      consume("EXCEPT");
+      let param: Identifier = { type: "Identifier", name: "e" };
+      // Soporte para except Exception as e:
+      if (peek() && peek().type === "IDENTIFIER") {
+        // except Exception
+        const excName = String(consume("IDENTIFIER").value);
+        if (peek() && peek().type === "IDENTIFIER" && peek().value === "as") {
+          consume("IDENTIFIER"); // as
+          if (peek() && peek().type === "IDENTIFIER") {
+            param = {
+              type: "Identifier",
+              name: String(consume("IDENTIFIER").value),
+            };
+          }
+        } else {
+          // except Exception:
+          param = { type: "Identifier", name: excName };
+        }
+      }
+      consume("PUNCTUATION"); // :
+      if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      consume("INDENT");
+      const body: Statement[] = [];
+      while (peek() && peek().type !== "DEDENT" && peek().type !== "FINALLY") {
+        while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+        if (peek() && peek().type !== "DEDENT" && peek().type !== "FINALLY") {
+          body.push(parseStatement());
+        }
+      }
+      consume("DEDENT");
+      handler = { param, body };
+    }
+
+    let finalizer;
+    if (peek() && peek().type === "FINALLY") {
+      consume("FINALLY");
+      consume("PUNCTUATION"); // :
+      if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      consume("INDENT");
+      finalizer = [];
+      while (peek() && peek().type !== "DEDENT") {
+        while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+        if (peek() && peek().type !== "DEDENT") {
+          finalizer.push(parseStatement());
+        }
+      }
+      consume("DEDENT");
+    }
+
+    return { type: "TryStatement", block, handler, finalizer };
+  }
   function parseFunctionDeclaration(): FunctionDeclaration {
     consume("DEF");
     const name = String(consume("IDENTIFIER").value);
@@ -362,7 +443,7 @@ export function parse(tokens: Token[]): Program {
         argument,
       };
     }
-    
+
     // Soporte para funciones lambda
     if (token.type === "LAMBDA") {
       consume("LAMBDA");

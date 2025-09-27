@@ -44,7 +44,7 @@ export function generateJs(node: Program | Statement | Expression): string {
             node.expression.right
           )};\n`;
         }
-        
+
         return `${node.expression.left.name} = ${generateJs(
           node.expression.right
         )};\n`;
@@ -154,6 +154,23 @@ export function generateJs(node: Program | Statement | Expression): string {
     case "LambdaExpression":
       return `(${node.params.join(", ")}) => ${generateJs(node.body)}`;
 
+    case "TryStatement": {
+      let code = "try {\n";
+      code += node.block.map((s) => "  " + generateJs(s)).join("");
+      code += "}\n";
+      if (node.handler) {
+        code += `catch (${node.handler.param.name}) {\n`;
+        code += node.handler.body.map((s) => "  " + generateJs(s)).join("");
+        code += "}\n";
+      }
+      if (node.finalizer) {
+        code += "finally {\n";
+        code += node.finalizer.map((s) => "  " + generateJs(s)).join("");
+        code += "}\n";
+      }
+      return code;
+    }
+    
     default:
       return "// [NO SOPORTADO]\n";
   }
