@@ -47,12 +47,12 @@ export const PROGRAMMING_LANGUAGES = [
   //   color: "bg-orange-600",
   //   gradient: "from-orange-500 to-red-500",
   // },
-  // {
-  //   value: "php",
-  //   label: "PHP",
-  //   color: "bg-indigo-500",
-  //   gradient: "from-indigo-400 to-indigo-600",
-  // },
+  {
+    value: "php",
+    label: "PHP",
+    color: "bg-indigo-500",
+    gradient: "from-indigo-400 to-indigo-600",
+  },
   // {
   //   value: "ruby",
   //   label: "Ruby",
