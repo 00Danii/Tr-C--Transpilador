@@ -29,7 +29,7 @@ export function tokenize(input: string): Token[] {
     [/^\bexcept\b/, "EXCEPT"],
     [/^\bfinally\b/, "FINALLY"],
     [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
-    [/^[\+\-\*\/=<>!]+/, "OPERATOR"],
+    [/^[\+\-\*\/%=<>!]+/, "OPERATOR"],
     [/^[:,\(\)\[\]\{\}]/, "PUNCTUATION"],
   ];
 
