@@ -184,6 +184,9 @@ export function generatePython(node: Program | Statement | Expression): string {
       return code;
     }
 
+    case "LambdaExpression":
+      return `lambda ${node.params.join(", ")}: ${generatePython(node.body)}`;
+
     default:
       return "# [NO SOPORTADO]";
   }

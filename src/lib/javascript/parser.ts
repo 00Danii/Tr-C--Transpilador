@@ -426,6 +426,56 @@ export function parse(tokens: Token[]): Program {
       return { type: "Identifier", name: String(token.value) };
     }
 
+    // Soporte para función flecha con paréntesis
+    if (token.type === "PUNCTUATION" && token.value === "(") {
+      // Busca el índice del paréntesis de cierre
+      let i = 1;
+      while (
+        peek(i) &&
+        !(peek(i).type === "PUNCTUATION" && peek(i).value === ")")
+      ) {
+        i++;
+      }
+      // El siguiente token debe ser ARROW
+      if (peek(i + 1) && peek(i + 1).type === "ARROW") {
+        consume("PUNCTUATION"); // (
+        const params: string[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          if (peek().type === "IDENTIFIER") {
+            params.push(String(consume("IDENTIFIER").value));
+            if (
+              peek() &&
+              peek().type === "PUNCTUATION" &&
+              peek().value === ","
+            ) {
+              consume("PUNCTUATION");
+            }
+          } else {
+            throw new Error(
+              `Se esperaba IDENTIFIER, pero se obtuvo ${peek().type}, valor: ${
+                peek().value
+              }`
+            );
+          }
+        }
+        consume("PUNCTUATION"); // )
+        consume("ARROW");
+        const body = parseExpression();
+        return { type: "LambdaExpression", params, body };
+      }
+    }
+
+    // //! Soporte para función flecha sin paréntesis
+    // if (token.type === "IDENTIFIER" && peek(1) && peek(1).type === "ARROW") {
+    //   const params = [String(consume("IDENTIFIER").value)];
+    //   consume("ARROW");
+    //   const body = parseExpression();
+    //   return { type: "LambdaExpression", params, body };
+    // }
+
     throw new Error(`Token inesperado: ${token.type}, valor: ${token.value}`);
   }
 
