@@ -187,6 +187,24 @@ export function generatePython(node: Program | Statement | Expression): string {
     case "LambdaExpression":
       return `lambda ${node.params.join(", ")}: ${generatePython(node.body)}`;
 
+    case "TryStatement": {
+      let code = "try:\n";
+      code += node.block.map((s) => "    " + generatePython(s)).join("\n");
+      if (node.handler) {
+        code += `\nexcept Exception as ${node.handler.param.name}:\n`;
+        code += node.handler.body
+          .map((s) => "    " + generatePython(s))
+          .join("\n");
+      }
+      if (node.finalizer) {
+        code += `\nfinally:\n`;
+        code += node.finalizer
+          .map((s) => "    " + generatePython(s))
+          .join("\n");
+      }
+      return code;
+    }
+
     default:
       return "# [NO SOPORTADO]";
   }

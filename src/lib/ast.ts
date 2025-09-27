@@ -13,6 +13,8 @@ export type Statement =
   | WhileStatement
   | ForStatement
   | DoWhileStatement
+  | TryStatement
+  | BlockStatement
   | undefined;
 
 export type FunctionDeclaration = {
@@ -116,4 +118,19 @@ export type LambdaExpression = {
   type: "LambdaExpression";
   params: string[];
   body: Expression;
+};
+
+export type TryStatement = {
+  type: "TryStatement";
+  block: Statement[];
+  handler?: {
+    param: Identifier;
+    body: Statement[];
+  };
+  finalizer?: Statement[];
+};
+
+export type BlockStatement = {
+  type: "BlockStatement";
+  body: Statement[];
 };

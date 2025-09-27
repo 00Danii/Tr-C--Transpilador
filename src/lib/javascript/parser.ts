@@ -10,6 +10,7 @@ import {
   WhileStatement,
   ForStatement,
   DoWhileStatement,
+  TryStatement,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -39,6 +40,7 @@ export function parse(tokens: Token[]): Program {
 
   function parseStatement(): Statement {
     const token = peek();
+
     if (token.type === "LINE_COMMENT" || token.type === "BLOCK_COMMENT") {
       consume();
       return { type: "CommentStatement", value: String(token.value) };
@@ -112,6 +114,10 @@ export function parse(tokens: Token[]): Program {
     ) {
       return parseVariableDeclaration();
     }
+
+    // Soporte para try-catch-finally
+    if (token.type === "TRY") return parseTryStatement();
+
     return parseExpressionStatement();
   }
 
@@ -477,6 +483,42 @@ export function parse(tokens: Token[]): Program {
     // }
 
     throw new Error(`Token inesperado: ${token.type}, valor: ${token.value}`);
+  }
+
+  function parseTryStatement(): TryStatement {
+    consume("TRY");
+    const block = parseBlock();
+
+    let handler;
+    if (peek() && peek().type === "CATCH") {
+      consume("CATCH");
+      consume("PUNCTUATION"); // (
+      const param = {
+        type: "Identifier" as const,
+        name: String(consume("IDENTIFIER").value),
+      };
+      consume("PUNCTUATION"); // )
+      const body = parseBlock();
+      handler = { param, body };
+    }
+
+    let finalizer;
+    if (peek() && peek().type === "FINALLY") {
+      consume("FINALLY");
+      finalizer = parseBlock();
+    }
+
+    return { type: "TryStatement", block, handler, finalizer };
+  }
+
+  function parseBlock(): Statement[] {
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    return body;
   }
 
   return parseProgram();
