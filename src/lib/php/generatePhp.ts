@@ -149,7 +149,7 @@ export function generatePhp(
       return `${node.operator}${generatePhp(node.argument)}`;
 
     case "LambdaExpression":
-      return `fn(${node.params.join(", ")}) => ${generatePhp(node.body)}`;
+      return `fn($${node.params.join(", ")}) => ${generatePhp(node.body)}`;
 
     case "TryStatement":
       let tryCode =
