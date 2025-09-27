@@ -39,6 +39,11 @@ export function generatePhp(
         : String(node.value);
 
     case "CallExpression":
+      // Si es print (que viene de console.log en JS), genera echo
+      if (node.callee.type === "Identifier" && node.callee.name === "print") {
+        return "echo " + node.arguments.map(generatePhp).join(", ");
+      }
+      // Normal
       return `${generatePhp(node.callee)}(${node.arguments
         .map(generatePhp)
         .join(", ")})`;
