@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/lang-php": "^6.0.2",
     "@codemirror/lang-python": "^6.2.1",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
