@@ -99,13 +99,42 @@ export function generatePhp(
         );
       }
 
-      // Ejemplo para for tipo Python
-      if (node.varName && node.rangeExpr) {
+      // For tipo Python: for i in range(...)
+      if (
+        node.varName &&
+        node.rangeExpr &&
+        node.rangeExpr.type === "CallExpression" &&
+        node.rangeExpr.callee.name === "range"
+      ) {
+        const args = node.rangeExpr.arguments.map(generatePhp);
+        let start = "0",
+          end = "0",
+          step = "1";
+        if (args.length === 1) {
+          // range(end)
+          start = "0";
+          end = args[0];
+        } else if (args.length === 2) {
+          // range(start, end)
+          start = args[0];
+          end = args[1];
+        } else if (args.length === 3) {
+          // range(start, end, step)
+          start = args[0];
+          end = args[1];
+          step = args[2];
+        }
+        // Si el paso es negativo, usa i--, si es positivo, i++
+        let cmp = step.startsWith("-") ? ">" : "<";
+        let inc =
+          step === "1" ? `${node.varName}++` : `${node.varName} += ${step}`;
+        if (step.startsWith("-")) {
+          inc =
+            step === "-1" ? `${node.varName}--` : `${node.varName} += ${step}`;
+        }
         return (
-          `foreach (range(${generatePhp(node.rangeExpr)}) as $${
-            node.varName
-          }) {\n` +
-          node.body.map(generatePhp).join("") +
+          `for ($${node.varName} = ${start}; $${node.varName} ${cmp} ${end}; ${inc}) {\n  ` +
+          node.body.map(generatePhp).join("  ") +
           "}\n"
         );
       }
