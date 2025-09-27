@@ -12,6 +12,7 @@ export function transpileCode(
   toLang: string
 ): string {
   try {
+    // js -> python
     if (fromLang === "javascript" && toLang === "python") {
       const tokens = jsTokenize(code);
       console.log(tokens);
@@ -19,6 +20,8 @@ export function transpileCode(
       console.log(ast);
       return generatePython(ast);
     }
+
+    // python -> js
     if (fromLang === "python" && toLang === "javascript") {
       const tokens = pyTokenize(code);
       console.log(tokens);
@@ -26,6 +29,8 @@ export function transpileCode(
       console.log(ast);
       return generateJs(ast);
     }
+
+    // js -> php
     if (fromLang === "javascript" && toLang === "php") {
       const tokens = jsTokenize(code);
       console.log(tokens);
@@ -33,6 +38,16 @@ export function transpileCode(
       console.log(ast);
       return generatePhp(ast);
     }
+
+    // python -> php
+    if (fromLang === "python" && toLang === "php") {
+      const tokens = pyTokenize(code);
+      console.log(tokens);
+      const ast = pyParse(tokens);
+      console.log(ast);
+      return generatePhp(ast);
+    }
+
     // Otros casos...
     return "// Transpilación no soportada para estos lenguajes.";
   } catch (err: any) {
