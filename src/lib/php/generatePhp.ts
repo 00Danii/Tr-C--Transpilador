@@ -56,11 +56,12 @@ export function generatePhp(
       code += node.consequent.map(generatePhp).join("  ");
       code += "}\n";
       if (node.alternate) {
-        // Caso especial: else normal representado como IfStatement con test = 1
+        // Detecta else normal representado como IfStatement con test true/1
         if (
           node.alternate.type === "IfStatement" &&
           node.alternate.test.type === "Literal" &&
-          node.alternate.test.value === 1
+          (node.alternate.test.value === true ||
+            node.alternate.test.value === 1)
         ) {
           code +=
             "else {\n  " +
@@ -68,13 +69,29 @@ export function generatePhp(
             "}\n";
         } else if (node.alternate.type === "IfStatement") {
           // else if
-          code += "else " + generatePhp(node.alternate);
+          code +=
+            "else if (" +
+            generatePhp(node.alternate.test) +
+            ") {\n  " +
+            node.alternate.consequent.map(generatePhp).join("  ") +
+            "}\n";
+          // Genera el else final si existe y es un IfStatement con test true/1
+          if (
+            node.alternate.alternate &&
+            node.alternate.alternate.type === "IfStatement" &&
+            node.alternate.alternate.test.type === "Literal" &&
+            (node.alternate.alternate.test.value === true ||
+              node.alternate.alternate.test.value === 1)
+          ) {
+            code +=
+              "else {\n  " +
+              node.alternate.alternate.consequent.map(generatePhp).join("  ") +
+              "}\n";
+          }
         } else if (Array.isArray(node.alternate)) {
-          // else como array de statements (por si acaso)
           code +=
             "else {\n  " + node.alternate.map(generatePhp).join("  ") + "}\n";
         } else {
-          // bloque único
           code += "else {\n  " + generatePhp(node.alternate) + "}\n\n";
         }
       }
@@ -162,7 +179,9 @@ export function generatePhp(
       }
       if (node.finalizer) {
         tryCode +=
-          "finally {\n  " + node.finalizer.map(generatePhp).join("  ") + "}\n\n";
+          "finally {\n  " +
+          node.finalizer.map(generatePhp).join("  ") +
+          "}\n\n";
       }
       return tryCode;
 
