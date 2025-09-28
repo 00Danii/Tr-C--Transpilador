@@ -13,7 +13,7 @@ export function generatePhp(
         `function ${node.name}(${node.params.join(", ")}) {\n` +
         "  " +
         node.body.map(generatePhp).join("  ") +
-        "}\n"
+        "}\n\n"
       );
 
     case "ReturnStatement":
@@ -75,7 +75,7 @@ export function generatePhp(
             "else {\n  " + node.alternate.map(generatePhp).join("  ") + "}\n";
         } else {
           // bloque único
-          code += "else {\n  " + generatePhp(node.alternate) + "}\n";
+          code += "else {\n  " + generatePhp(node.alternate) + "}\n\n";
         }
       }
       return code;
@@ -84,7 +84,7 @@ export function generatePhp(
       return (
         `while (${generatePhp(node.test)}) {\n  ` +
         node.body.map(generatePhp).join("  ") +
-        "}\n"
+        "}\n\n"
       );
 
     case "ForStatement":
@@ -95,7 +95,7 @@ export function generatePhp(
             node.test
           )}; ${generatePhp(node.update).replace(/;\s*$/, "")}) {\n  ` +
           node.body.map(generatePhp).join("  ") +
-          "}\n"
+          "}\n\n"
         );
       }
 
@@ -135,7 +135,7 @@ export function generatePhp(
         return (
           `for ($${node.varName} = ${start}; $${node.varName} ${cmp} ${end}; ${inc}) {\n  ` +
           node.body.map(generatePhp).join("  ") +
-          "}\n"
+          "}\n\n"
         );
       }
       return "";
@@ -143,7 +143,7 @@ export function generatePhp(
     case "DoWhileStatement":
       return `do {\n  ${node.body
         .map(generatePhp)
-        .join("  ")}} while (${generatePhp(node.test)});\n`;
+        .join("  ")}} while (${generatePhp(node.test)});\n\n`;
 
     case "UnaryExpression":
       return `${node.operator}${generatePhp(node.argument)}`;
@@ -162,7 +162,7 @@ export function generatePhp(
       }
       if (node.finalizer) {
         tryCode +=
-          "finally {\n  " + node.finalizer.map(generatePhp).join("  ") + "}\n";
+          "finally {\n  " + node.finalizer.map(generatePhp).join("  ") + "}\n\n";
       }
       return tryCode;
 
