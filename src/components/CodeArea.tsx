@@ -97,7 +97,7 @@ export function CodeArea({
           </div>
         </div>
       </div>
-      <CardContent className="p-0">
+      <CardContent className="p-0 h-110">
         <div className="relative">
           <CodeMirror
             value={value}
