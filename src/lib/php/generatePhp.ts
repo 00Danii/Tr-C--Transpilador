@@ -34,9 +34,13 @@ export function generatePhp(
       return `$${node.name}`;
 
     case "Literal":
-      return typeof node.value === "string"
-        ? `"${node.value}"`
-        : String(node.value);
+      if (typeof node.value === "string") {
+        return `"${node.value}"`;
+      }
+      if (typeof node.value === "boolean") {
+        return node.value ? "true" : "false";
+      }
+      return String(node.value);
 
     case "CallExpression":
       // Si es print (que viene de console.log en JS), genera echo
