@@ -56,7 +56,7 @@ export type Identifier = {
 
 export type Literal = {
   type: "Literal";
-  value: string | number | boolean;
+  value: string | number | boolean | null;
 };
 
 export type VariableDeclaration = {
