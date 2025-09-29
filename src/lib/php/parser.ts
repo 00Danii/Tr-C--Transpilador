@@ -175,7 +175,7 @@ export function parse(tokens: Token[]): Program {
     }
     if (peek() && peek().type === "PUNCTUATION" && peek().value === ";")
       consume("PUNCTUATION");
-    return { type: "VariableDeclaration", kind: "var", name, value };
+    return { type: "VariableDeclaration", kind: "", name, value };
   }
 
   function parseIfStatement(): IfStatement {
