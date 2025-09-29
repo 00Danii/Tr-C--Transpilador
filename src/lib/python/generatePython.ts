@@ -31,6 +31,9 @@ export function generatePython(node: Program | Statement | Expression): string {
         const val = node.value.replace(/^"+|"+$/g, "");
         return `"${val}"`;
       }
+      if (typeof node.value === "boolean") {
+        return node.value ? "True" : "False";
+      }
       return String(node.value);
 
     case "VariableDeclaration":
