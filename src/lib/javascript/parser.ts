@@ -402,6 +402,16 @@ export function parse(tokens: Token[]): Program {
       return { type: "UnaryExpression", operator: "-", argument: next };
     }
 
+    // Soporte para true y false
+    if (token.type === "TRUE") {
+      consume();
+      return { type: "Literal", value: true };
+    }
+    if (token.type === "FALSE") {
+      consume();
+      return { type: "Literal", value: false };
+    }
+
     if (token.type === "NUMBER" || token.type === "STRING") {
       consume();
       return { type: "Literal", value: token.value };

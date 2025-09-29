@@ -19,6 +19,8 @@ export function tokenize(input: string): Token[] {
     [/^try\b/, "TRY"],
     [/^catch\b/, "CATCH"],
     [/^finally\b/, "FINALLY"],
+    [/^\btrue\b/, "TRUE"],
+    [/^\bfalse\b/, "FALSE"],
     [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
     [/^\+\+/, "INCREMENT"],
     [/^--/, "DECREMENT"],
