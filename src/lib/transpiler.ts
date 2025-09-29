@@ -5,6 +5,8 @@ import { tokenize as pyTokenize } from "@/lib/python/lexer";
 import { parse as pyParse } from "@/lib/python/parser";
 import { generateJs } from "./javascript/generateJs";
 import { generatePhp } from "./php/generatePhp";
+import { tokenize as phpTokenize } from "./php/lexer";
+import { parse as phpParse } from "./php/parser";
 
 export function transpileCode(
   code: string,
@@ -46,6 +48,24 @@ export function transpileCode(
       const ast = pyParse(tokens);
       console.log(ast);
       return generatePhp(ast);
+    }
+
+    // php -> js
+    if (fromLang === "php" && toLang === "javascript") {
+      const tokens = phpTokenize(code);
+      console.log(tokens);
+      const ast = phpParse(tokens);
+      console.log(ast);
+      return generateJs(ast);
+    }
+
+    // php -> python
+    if (fromLang === "php" && toLang === "python") {
+      const tokens = phpTokenize(code);
+      console.log(tokens);
+      const ast = phpParse(tokens);
+      console.log(ast);
+      return generatePython(ast);
     }
 
     // Otros casos...
