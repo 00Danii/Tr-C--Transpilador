@@ -104,7 +104,7 @@ export function CodeArea({
         <div className="relative">
           <CodeMirror
             value={value}
-            height="500px"
+            height="450px"
             theme={codeMirrorTheme}
             extensions={[getLanguageExtension()]}
             readOnly={!!readOnly}
