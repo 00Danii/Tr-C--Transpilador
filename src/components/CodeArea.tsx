@@ -10,6 +10,7 @@ import { xcodeLight } from "@uiw/codemirror-theme-xcode";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { php } from "@codemirror/lang-php";
+import { java } from "@codemirror/lang-java";
 
 interface Props {
   title: React.ReactNode;
@@ -51,6 +52,8 @@ export function CodeArea({
         return javascript();
       case "php":
         return php();
+      case "java":
+        return java();
       default:
         return javascript();
     }
