@@ -117,6 +117,18 @@ export function generateJs(node: Program | Statement | Expression): string {
         code += "}\n";
         return code;
       }
+
+      // Soporte para for clásico
+      if (node.init && node.test && node.update) {
+        return (
+          `for (${generateJs(node.init).replace(/;\s*$/, "")}; ${generateJs(
+            node.test
+          )}; ${generateJs(node.update).replace(/;\s*$/, "")}) {\n` +
+          node.body.map((s) => "  " + generateJs(s)).join("") +
+          "}\n"
+        );
+      }
+
       return "// [NO SOPORTADO: for]\n";
     }
 
@@ -170,7 +182,7 @@ export function generateJs(node: Program | Statement | Expression): string {
       }
       return code;
     }
-    
+
     default:
       return "// [NO SOPORTADO]\n";
   }

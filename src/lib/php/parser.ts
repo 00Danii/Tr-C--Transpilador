@@ -283,14 +283,108 @@ export function parse(tokens: Token[]): Program {
     return { type: "WhileStatement", test, body };
   }
 
+  function parseForInitOrUpdate(): Statement | null {
+    const token = peek();
+    if (
+      !token ||
+      (token.type === "PUNCTUATION" &&
+        (token.value === ";" || token.value === ")"))
+    ) {
+      return null;
+    }
+    // $i++;
+    if (token.type === "VARIABLE" && peek(1)?.type === "INCREMENT") {
+      const name = String(consume("VARIABLE").value).slice(1);
+      consume("INCREMENT");
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "+",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+    // $i--;
+    if (token.type === "VARIABLE" && peek(1)?.type === "DECREMENT") {
+      const name = String(consume("VARIABLE").value).slice(1);
+      consume("DECREMENT");
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "-",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+    // VariableDeclaration SOLO si es asignación
+    if (
+      token.type === "VARIABLE" &&
+      peek(1) &&
+      peek(1).type === "OPERATOR" &&
+      peek(1).value === "="
+    ) {
+      // Transforma VariableDeclaration a ExpressionStatement con BinaryExpression
+      // Para cumplir con la estructura del ForStatement
+      const varDecl = parseVariableDeclaration();
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name: varDecl.name },
+          right: varDecl.value,
+        },
+      };
+    }
+    // ExpressionStatement
+    const expr = parseExpression();
+    return { type: "ExpressionStatement", expression: expr };
+  }
+
   function parseForStatement(): ForStatement {
     consume("FOR");
     consume("PUNCTUATION"); // (
-    const init = parseStatement();
-    const test = parseExpression();
-    consume("PUNCTUATION"); // ;
-    const update = parseStatement();
-    consume("PUNCTUATION"); // )
+    let init: Statement | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ";")) {
+      init = parseForInitOrUpdate();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+    } else {
+      consume("PUNCTUATION");
+    }
+    let test: Expression | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ";")) {
+      test = parseExpression();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+    } else {
+      consume("PUNCTUATION");
+    }
+    let update: Statement | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ")")) {
+      update = parseForInitOrUpdate();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ")") {
+        consume("PUNCTUATION");
+      }
+    } else {
+      consume("PUNCTUATION");
+    }
     const body = parseBlock();
     return { type: "ForStatement", init, test, update, body };
   }
