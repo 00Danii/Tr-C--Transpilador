@@ -334,7 +334,6 @@ export function parse(tokens: Token[]): Program {
 
   function parsePrimary(): Expression {
     const token = peek();
-    console.log("parsePrimary token:", token);
 
     if (!token) throw new Error("Token inesperado: EOF");
 
