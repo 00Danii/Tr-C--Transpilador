@@ -183,6 +183,13 @@ export function generateJs(node: Program | Statement | Expression): string {
       return code;
     }
 
+    case "DoWhileStatement":
+      return (
+        `do {\n` +
+        node.body.map((s) => "  " + generateJs(s)).join("") +
+        `} while (${generateJs(node.test)});\n`
+      );
+
     default:
       return "// [NO SOPORTADO]\n";
   }
