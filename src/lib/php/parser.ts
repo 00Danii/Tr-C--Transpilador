@@ -55,6 +55,53 @@ export function parse(tokens: Token[]): Program {
 
     if (!token) return undefined;
 
+    // Expresiones especiales: incremento y decremento
+    // $i++;
+    if (token.type === "VARIABLE" && peek(1)?.type === "INCREMENT") {
+      const name = String(consume("VARIABLE").value).slice(1);
+      consume("INCREMENT");
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "+",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+
+    // $i--;
+    if (token.type === "VARIABLE" && peek(1)?.type === "DECREMENT") {
+      const name = String(consume("VARIABLE").value).slice(1);
+      consume("DECREMENT");
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "-",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+
     // Comentarios
     if (token.type === "LINE_COMMENT" || token.type === "BLOCK_COMMENT") {
       consume();
@@ -75,9 +122,6 @@ export function parse(tokens: Token[]): Program {
 
     // Try/catch/finally
     if (token.type === "TRY") return parseTryStatement();
-
-    // Variable declaration
-    if (token.type === "VARIABLE") return parseVariableDeclaration();
 
     // Return
     if (token.type === "RETURN") {
@@ -107,6 +151,16 @@ export function parse(tokens: Token[]): Program {
           arguments: args,
         },
       };
+    }
+
+    // Variable declaration SOLO si es asignación
+    if (
+      token.type === "VARIABLE" &&
+      peek(1) &&
+      peek(1).type === "OPERATOR" &&
+      peek(1).value === "="
+    ) {
+      return parseVariableDeclaration();
     }
 
     // Expression statement
@@ -280,6 +334,7 @@ export function parse(tokens: Token[]): Program {
 
   function parsePrimary(): Expression {
     const token = peek();
+    console.log("parsePrimary token:", token);
 
     if (!token) throw new Error("Token inesperado: EOF");
 
