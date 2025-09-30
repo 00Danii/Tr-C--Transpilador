@@ -7,6 +7,7 @@ import { generateJs } from "./javascript/generateJs";
 import { generatePhp } from "./php/generatePhp";
 import { tokenize as phpTokenize } from "./php/lexer";
 import { parse as phpParse } from "./php/parser";
+import { generateJava } from "./java/generateJava";
 
 export function transpileCode(
   code: string,
@@ -66,6 +67,33 @@ export function transpileCode(
       const ast = phpParse(tokens);
       console.log(ast);
       return generatePython(ast);
+    }
+
+    // js -> java
+    if (fromLang === "javascript" && toLang === "java") {
+      const tokens = jsTokenize(code);
+      console.log(tokens);
+      const ast = jsParse(tokens);
+      console.log(ast);
+      return generateJava(ast);
+    }
+
+    // python -> java
+    if (fromLang === "python" && toLang === "java") {
+      const tokens = pyTokenize(code);
+      console.log(tokens);
+      const ast = pyParse(tokens);
+      console.log(ast);
+      return generateJava(ast);
+    }
+
+    // php -> java
+    if (fromLang === "php" && toLang === "java") {
+      const tokens = phpTokenize(code);
+      console.log(tokens);
+      const ast = phpParse(tokens);
+      console.log(ast);
+      return generateJava(ast);
     }
 
     // Otros casos...
