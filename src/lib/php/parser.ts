@@ -19,6 +19,7 @@ import {
   CallExpression,
   UnaryExpression,
   LambdaExpression,
+  DoWhileStatement,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -184,9 +185,30 @@ export function parse(tokens: Token[]): Program {
       return { type: "BlockStatement", body: parseBlock() };
     }
 
+    // do { } while ();
+    if (token.type === "DO") return parseDoWhileStatement();
+
     // Por defecto, consume y retorna undefined
     consume();
     return undefined;
+  }
+
+  function parseDoWhileStatement(): DoWhileStatement {
+    consume("DO");
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    consume("WHILE");
+    consume("PUNCTUATION"); // (
+    const test = parseExpression();
+    consume("PUNCTUATION"); // )
+    if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+      consume("PUNCTUATION");
+    }
+    return { type: "DoWhileStatement", body, test };
   }
 
   function parseBlock(): Statement[] {

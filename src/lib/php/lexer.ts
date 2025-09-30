@@ -13,6 +13,7 @@ export function tokenize(input: string): Token[] {
     [/^\bif\b/, "IF"],
     [/^\belse\b/, "ELSE"],
     [/^\belseif\b/, "ELSEIF"],
+    [/^\bdo\b/, "DO"],
     [/^\bwhile\b/, "WHILE"],
     [/^\bfor\b/, "FOR"],
     [/^\bforeach\b/, "FOREACH"],
