@@ -418,6 +418,10 @@ export function parse(tokens: Token[]): Program {
     if (peek() && peek().type === "CATCH") {
       consume("CATCH");
       consume("PUNCTUATION"); // (
+      // EXCEPTION es opcional
+      if (peek() && peek().type === "EXCEPTION") {
+        consume("EXCEPTION"); // Exception
+      }
       const param: Identifier = {
         type: "Identifier",
         name: String(consume("VARIABLE").value).slice(1),

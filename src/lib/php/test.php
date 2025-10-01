@@ -46,7 +46,7 @@ for ($i = 0; $i < 3; $i+=2) {
 // TRY CATCH FINALLY
 try {
     $z = $y / 0;
-} catch ($e) {
+} catch (Exception $e) {
     echo e;
 } finally {
     echo "Bloque finally";

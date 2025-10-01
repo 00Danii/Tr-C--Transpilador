@@ -26,6 +26,7 @@ export function tokenize(input: string): Token[] {
     [/^\btry\b/, "TRY"],
     [/^\bcatch\b/, "CATCH"],
     [/^\bfinally\b/, "FINALLY"],
+    [/^\bException\b/, "EXCEPTION"],
     [/^\$\w+/, "VARIABLE"],
     [/^\d+(\.\d+)?/, "NUMBER"],
     [/^"([^"\\]|\\.)*"/, "STRING"],
