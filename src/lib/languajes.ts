@@ -17,12 +17,12 @@ export const PROGRAMMING_LANGUAGES = [
     color: "bg-green-500",
     gradient: "from-green-400 to-green-600",
   },
-  {
-    value: "java",
-    label: "Java",
-    color: "bg-orange-500",
-    gradient: "from-orange-400 to-orange-600",
-  },
+  // {
+  //   value: "java",
+  //   label: "Java",
+  //   color: "bg-orange-500",
+  //   gradient: "from-orange-400 to-orange-600",
+  // },
   // {
   //   value: "csharp",
   //   label: "C#",
