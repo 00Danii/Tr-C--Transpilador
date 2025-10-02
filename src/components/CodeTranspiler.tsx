@@ -69,11 +69,12 @@ export function CodeTranspiler() {
     }
   };
 
-  const handleCopyToClipboard = async () => {
-    if (!outputCode) return;
+  const handleCopyToClipboard = async (type: "input" | "output") => {
+    const code = type === "input" ? inputCode : outputCode;
+    if (!code) return;
 
     try {
-      await navigator.clipboard.writeText(outputCode);
+      await navigator.clipboard.writeText(code);
       toast("¡Copiado!", {
         description: "Código copiado al portapapeles",
       });
@@ -111,7 +112,9 @@ export function CodeTranspiler() {
           <CodeArea
             title={
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                <span className="whitespace-nowrap hidden xl:block">Código de entrada</span>
+                <span className="whitespace-nowrap hidden xl:block">
+                  Código de entrada
+                </span>
                 <div className="min-w-0 max-w-[160px]">
                   <LanguageSelector
                     label=""
@@ -125,6 +128,8 @@ export function CodeTranspiler() {
             languageLabel={getLanguageLabel(inputLanguage)}
             languageGradient={getLanguageGradient(inputLanguage)}
             value={inputCode}
+            showCopy={!!inputCode}
+            onCopy={() => handleCopyToClipboard("input")}
             onChange={setInputCode}
             icon={<Code2 className="h-5 w-5 text-primary/60" />}
             placeholder={`Escribe o pega tu código ${getLanguageLabel(
@@ -132,11 +137,32 @@ export function CodeTranspiler() {
             )} aquí...`}
           ></CodeArea>
 
+          <div className="flex justify-center xl:hidden">
+            <TranspileButton
+              inputLanguage={inputLanguage}
+              outputLanguage={outputLanguage}
+              isTranspiling={isTranspiling}
+              onClick={handleTranspile}
+              disabled={isTranspiling || !inputCode.trim()}
+            >
+              {isTranspiling ? (
+                <>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3" />
+                  Transpilando ...
+                </>
+              ) : (
+                <>Transpilar Código</>
+              )}
+            </TranspileButton>
+          </div>
+
           {/* Output Code Area */}
           <CodeArea
             title={
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                <span className="whitespace-nowrap hidden xl:block">Código de salida</span>
+                <span className="whitespace-nowrap hidden xl:block">
+                  Código de salida
+                </span>
                 <div className="min-w-0 max-w-[160px]">
                   <LanguageSelector
                     label=""
@@ -152,7 +178,7 @@ export function CodeTranspiler() {
             value={outputCode}
             readOnly
             showCopy={!!outputCode}
-            onCopy={handleCopyToClipboard}
+            onCopy={() => handleCopyToClipboard("output")}
             icon={<Sparkles className="h-5 w-5 text-secondary/60" />}
             swapButton={
               <SwapButton
@@ -210,7 +236,7 @@ export function CodeTranspiler() {
           </Alert>
         )}
 
-        <div className="flex justify-center">
+        <div className="justify-center hidden xl:flex">
           <TranspileButton
             inputLanguage={inputLanguage}
             outputLanguage={outputLanguage}
