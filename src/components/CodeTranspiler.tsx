@@ -111,7 +111,7 @@ export function CodeTranspiler() {
           <CodeArea
             title={
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                <span className="whitespace-nowrap">Código de entrada</span>
+                <span className="whitespace-nowrap hidden xl:block">Código de entrada</span>
                 <div className="min-w-0 max-w-[160px]">
                   <LanguageSelector
                     label=""
@@ -136,7 +136,7 @@ export function CodeTranspiler() {
           <CodeArea
             title={
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                <span className="whitespace-nowrap">Código de salida</span>
+                <span className="whitespace-nowrap hidden xl:block">Código de salida</span>
                 <div className="min-w-0 max-w-[160px]">
                   <LanguageSelector
                     label=""
