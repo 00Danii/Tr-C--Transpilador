@@ -211,6 +211,9 @@ export function generatePython(node: Program | Statement | Expression): string {
     case "ArrayExpression":
       return `[${node.elements.map(generatePython).join(", ")}]`;
 
+    case "MemberExpression":
+      return `${generatePython(node.object)}[${generatePython(node.property)}]`;
+
     default:
       return "# [NO SOPORTADO]";
   }

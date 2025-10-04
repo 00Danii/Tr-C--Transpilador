@@ -125,6 +125,7 @@ export function generatePhp(
         node.varName &&
         node.rangeExpr &&
         node.rangeExpr.type === "CallExpression" &&
+        node.rangeExpr.callee.type === "Identifier" &&
         node.rangeExpr.callee.name === "range"
       ) {
         const args = node.rangeExpr.arguments.map(generatePhp);
@@ -191,6 +192,14 @@ export function generatePhp(
 
     case "BlockStatement":
       return node.body.map(generatePhp).join("");
+
+    case "ArrayExpression":
+      // array(1, 2, 3) en PHP
+      return "array(" + node.elements.map(generatePhp).join(", ") + ")";
+
+    case "MemberExpression":
+      // $arr[0] en PHP
+      return `${generatePhp(node.object)}[${generatePhp(node.property)}]`;
 
     default:
       return "";
