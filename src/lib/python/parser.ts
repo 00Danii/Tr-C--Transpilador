@@ -379,6 +379,24 @@ export function parse(tokens: Token[]): Program {
   function parsePrimary(): Expression {
     while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     const token = peek();
+
+    // Soporte para arreglos: [1, 2, x]
+    if (token.type === "PUNCTUATION" && token.value === "[") {
+      consume("PUNCTUATION"); // [
+      const elements: Expression[] = [];
+      while (
+        peek() &&
+        !(peek().type === "PUNCTUATION" && peek().value === "]")
+      ) {
+        elements.push(parseExpression());
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // ]
+      return { type: "ArrayExpression", elements };
+    }
+
     // Soporte para números negativos
     if (token && token.type === "OPERATOR" && token.value === "-") {
       consume("OPERATOR");
@@ -407,6 +425,20 @@ export function parse(tokens: Token[]): Program {
         name: String(token.value),
       } as Identifier;
       consume();
+
+      // Soporte para acceso a arreglo: arr[0]
+      let expr: Expression = id;
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+        consume("PUNCTUATION"); // [
+        const property = parseExpression();
+        consume("PUNCTUATION"); // ]
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property,
+        };
+      }
+
       // Si sigue un paréntesis, es una llamada a función
       if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
         consume("PUNCTUATION"); // (
@@ -432,7 +464,7 @@ export function parse(tokens: Token[]): Program {
           arguments: args,
         };
       }
-      return id;
+      return expr;
     }
     if (token.type === "OPERATOR" && token.value === "not") {
       consume();
