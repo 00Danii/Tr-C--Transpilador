@@ -208,6 +208,9 @@ export function generatePython(node: Program | Statement | Expression): string {
       return code;
     }
 
+    case "ArrayExpression":
+      return `[${node.elements.map(generatePython).join(", ")}]`;
+
     default:
       return "# [NO SOPORTADO]";
   }
