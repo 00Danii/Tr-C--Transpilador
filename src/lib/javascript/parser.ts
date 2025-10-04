@@ -391,6 +391,23 @@ export function parse(tokens: Token[]): Program {
   function parsePrimary(): Expression {
     const token = peek();
 
+    // Soporte para arreglos: [1, 2, x]
+    if (token.type === "PUNCTUATION" && token.value === "[") {
+      consume("PUNCTUATION"); // [
+      const elements: Expression[] = [];
+      while (
+        peek() &&
+        !(peek().type === "PUNCTUATION" && peek().value === "]")
+      ) {
+        elements.push(parseExpression());
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // ]
+      return { type: "ArrayExpression", elements };
+    }
+
     // Soporte para números negativos
     if (token.type === "OPERATOR" && token.value === "-") {
       consume("OPERATOR");

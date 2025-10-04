@@ -26,7 +26,7 @@ export function tokenize(input: string): Token[] {
     [/^--/, "DECREMENT"],
     [/^=>/, "ARROW"],
     [/^[\+\-\*\/%=<>!]+/, "OPERATOR"],
-    [/^[\(\)\{\};,]/, "PUNCTUATION"],
+    [/^[\(\)\{\}\[\];,]/, "PUNCTUATION"],
   ];
 
   let code = input;

@@ -40,7 +40,8 @@ export type Expression =
   | Literal
   | CallExpression
   | UnaryExpression
-  | LambdaExpression;
+  | LambdaExpression
+  | ArrayExpression;
 
 export type BinaryExpression = {
   type: "BinaryExpression";
@@ -133,4 +134,9 @@ export type TryStatement = {
 export type BlockStatement = {
   type: "BlockStatement";
   body: Statement[];
+};
+
+export type ArrayExpression = {
+  type: "ArrayExpression";
+  elements: Expression[];
 };
