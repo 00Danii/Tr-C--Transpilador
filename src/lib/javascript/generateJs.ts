@@ -91,6 +91,7 @@ export function generateJs(node: Program | Statement | Expression): string {
         node.varName &&
         node.rangeExpr &&
         node.rangeExpr.type === "CallExpression" &&
+        node.rangeExpr.callee.type === "Identifier" &&
         node.rangeExpr.callee.name === "range"
       ) {
         const args = node.rangeExpr.arguments.map(generateJs);
@@ -189,6 +190,12 @@ export function generateJs(node: Program | Statement | Expression): string {
         node.body.map((s) => "  " + generateJs(s)).join("") +
         `} while (${generateJs(node.test)});\n`
       );
+
+    case "ArrayExpression":
+      return `[${node.elements.map(generateJs).join(", ")}]`;
+
+    case "MemberExpression":
+      return `${generateJs(node.object)}[${generateJs(node.property)}]`;
 
     default:
       return "// [NO SOPORTADO]\n";
