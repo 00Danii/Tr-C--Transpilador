@@ -60,4 +60,12 @@ $inactivo = false;
 $contador = 0;
 $contador++;
 $contador--;
+
+
+// ARREGLOS
+$arr = array(0, "azul", 34);
+$arr[2];
+echo $arr[2];
+$frutas = array("Manzana", "Naranja", "Mango");
+echo $frutas[1];
 ?>

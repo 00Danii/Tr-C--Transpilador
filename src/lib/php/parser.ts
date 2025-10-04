@@ -457,6 +457,41 @@ export function parse(tokens: Token[]): Program {
 
     if (!token) throw new Error("Token inesperado: EOF");
 
+    // Soporte para array(...) de PHP
+    if (token.type === "ARRAY") {
+      consume("ARRAY");
+      consume("PUNCTUATION"); // (
+      const elements: Expression[] = [];
+      while (
+        peek() &&
+        !(peek().type === "PUNCTUATION" && peek().value === ")")
+      ) {
+        elements.push(parseExpression());
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // )
+      return { type: "ArrayExpression", elements };
+    }
+
+    // Soporte para arreglos literales: [1, 2, 3]
+    if (token.type === "PUNCTUATION" && token.value === "[") {
+      consume("PUNCTUATION"); // [
+      const elements: Expression[] = [];
+      while (
+        peek() &&
+        !(peek().type === "PUNCTUATION" && peek().value === "]")
+      ) {
+        elements.push(parseExpression());
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // ]
+      return { type: "ArrayExpression", elements };
+    }
+
     if (token.type === "NUMBER" || token.type === "STRING") {
       consume();
       return { type: "Literal", value: token.value };
@@ -475,13 +510,46 @@ export function parse(tokens: Token[]): Program {
       return { type: "Literal", value: null };
     }
 
+    // Soporte para variables y acceso a elementos: $arr[0]
     if (token.type === "VARIABLE") {
       consume();
-      return { type: "Identifier", name: String(token.value).slice(1) };
+      let expr: Expression = {
+        type: "Identifier",
+        name: String(token.value).slice(1),
+      };
+
+      // Acceso a elementos: $arr[0]
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+        consume("PUNCTUATION"); // [
+        const property = parseExpression();
+        consume("PUNCTUATION"); // ]
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property,
+        };
+      }
+
+      return expr;
     }
 
     if (token.type === "IDENTIFIER") {
       const name = consume().value as string;
+
+      let expr: Expression = { type: "Identifier", name };
+
+      // Acceso a elementos: arr[0]
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+        consume("PUNCTUATION"); // [
+        const property = parseExpression();
+        consume("PUNCTUATION"); // ]
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property,
+        };
+      }
+
       // Llamada a función
       if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
         consume("PUNCTUATION"); // (
@@ -503,7 +571,7 @@ export function parse(tokens: Token[]): Program {
           arguments: args,
         };
       }
-      return { type: "Identifier", name };
+      return expr;
     }
 
     throw new Error(`Token inesperado: ${token.type}, valor: ${token.value}`);

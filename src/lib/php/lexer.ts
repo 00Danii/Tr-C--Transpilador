@@ -35,6 +35,7 @@ export function tokenize(input: string): Token[] {
     [/^--/, "DECREMENT"],
     [/^[\+\-\*\/%=<>!&|\.]+/, "OPERATOR"],
     [/^[\(\)\{\}\[\];:,]/, "PUNCTUATION"],
+    [/^\barray\b/, "ARRAY"],
     [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
   ];
 
