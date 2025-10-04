@@ -29,7 +29,9 @@ export function generateJs(node: Program | Statement | Expression): string {
       return `return ${generateJs(node.argument)};\n`;
 
     case "VariableDeclaration":
-      return `${node.kind} ${node.name} = ${generateJs(node.value)};\n`;
+      return `${node.kind ? node.kind + " " : ""}${node.name} = ${generateJs(
+        node.value
+      )};\n`;
 
     case "ExpressionStatement":
       // Si es asignación
