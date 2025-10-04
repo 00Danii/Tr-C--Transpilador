@@ -53,3 +53,11 @@ inactivo = False
 
 # NUMEROS NEGATIVOS
 negativo = -42
+
+# LISTAS
+arr = [0,"azul", 34]
+arr[2]
+print(arreglo[4])
+
+frutas = ["Manzana", "Naranja", "Mango"]
+print(frutas[1])
