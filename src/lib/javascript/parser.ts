@@ -436,9 +436,23 @@ export function parse(tokens: Token[]): Program {
 
     if (token.type === "IDENTIFIER") {
       consume();
-      // Si el siguiente token es '(', es una llamada a función
+      let expr: Expression = { type: "Identifier", name: String(token.value) };
+
+      // Soporte para acceso a arreglo: arr[0]
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+        consume("PUNCTUATION"); // [
+        const property = parseExpression();
+        consume("PUNCTUATION"); // ]
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property,
+        };
+      }
+
+      // Llamada a función
       if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
-        consume("PUNCTUATION"); // consume '('
+        consume("PUNCTUATION"); // (
         const args: Expression[] = [];
         while (
           peek() &&
@@ -446,17 +460,18 @@ export function parse(tokens: Token[]): Program {
         ) {
           args.push(parseExpression());
           if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
-            consume("PUNCTUATION"); // consume ','
+            consume("PUNCTUATION"); // ,
           }
         }
-        consume("PUNCTUATION"); // consume ')'
+        consume("PUNCTUATION"); // )
         return {
           type: "CallExpression",
-          callee: { type: "Identifier", name: String(token.value) },
+          callee: expr,
           arguments: args,
         };
       }
-      return { type: "Identifier", name: String(token.value) };
+
+      return expr;
     }
 
     // Soporte para función flecha con paréntesis

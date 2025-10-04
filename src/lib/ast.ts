@@ -41,7 +41,8 @@ export type Expression =
   | CallExpression
   | UnaryExpression
   | LambdaExpression
-  | ArrayExpression;
+  | ArrayExpression
+  | MemberExpression;
 
 export type BinaryExpression = {
   type: "BinaryExpression";
@@ -69,7 +70,7 @@ export type VariableDeclaration = {
 
 export type CallExpression = {
   type: "CallExpression";
-  callee: Identifier;
+  callee: Identifier | MemberExpression;
   arguments: Expression[];
 };
 
@@ -139,4 +140,10 @@ export type BlockStatement = {
 export type ArrayExpression = {
   type: "ArrayExpression";
   elements: Expression[];
+};
+
+export type MemberExpression = {
+  type: "MemberExpression";
+  object: Expression;
+  property: Expression;
 };
