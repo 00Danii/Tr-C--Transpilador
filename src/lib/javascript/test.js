@@ -46,3 +46,17 @@ try {
 } finally {
   console.log("Bloque finally");
 }
+
+// ARREGLOS
+// Arreglo vacío
+let vacio = [];
+
+// Arreglo con valores
+let numeros = [1, 2, 3, 4, 5];
+
+// Arreglo con diferentes tipos de datos
+let mixto = [42, "texto", true, null];
+
+let colores = ["Rojo", "Verde"];
+
+console.log(colores[1])
