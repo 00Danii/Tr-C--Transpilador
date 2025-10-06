@@ -15,6 +15,7 @@ export type Statement =
   | DoWhileStatement
   | TryStatement
   | BlockStatement
+  | MainMethod
   | undefined;
 
 export type FunctionDeclaration = {
@@ -147,3 +148,8 @@ export type MemberExpression = {
   object: Expression;
   property: Expression;
 };
+
+export interface MainMethod {
+  type: "MainMethod";
+  body: Statement[];
+}
