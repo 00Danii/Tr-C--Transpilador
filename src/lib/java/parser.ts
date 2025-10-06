@@ -1,4 +1,4 @@
-import { Expression, Program, Statement } from "../ast";
+import { Expression, IfStatement, Program, Statement } from "../ast";
 import { Token } from "./lexer";
 
 export function parse(tokens: Token[]): Program {
@@ -89,7 +89,50 @@ export function parse(tokens: Token[]): Program {
       return parsePrintStatement();
     }
 
+    // Soporte para if, else if, else
+    if (peek().type === "IF") {
+      return parseIfStatement();
+    }
+
     throw new Error("Statement no soportado aún");
+  }
+
+  function parseIfStatement(): Statement {
+    consume("IF");
+    consume("PUNCTUATION"); // (
+    const test = parseExpression();
+    consume("PUNCTUATION"); // )
+    consume("PUNCTUATION"); // {
+    const consequent: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      consequent.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+
+    let alternate: Statement | IfStatement | undefined;
+    if (peek() && peek().type === "ELSE") {
+      consume("ELSE");
+      if (peek() && peek().type === "IF") {
+        alternate = parseIfStatement(); // else if
+      } else {
+        consume("PUNCTUATION"); // {
+        const elseBody: Statement[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === "}")
+        ) {
+          elseBody.push(parseStatement());
+        }
+        consume("PUNCTUATION"); // }
+        alternate = {
+          type: "IfStatement",
+          test: { type: "Literal", value: true }, // else: test siempre true
+          consequent: elseBody,
+        };
+      }
+    }
+
+    return { type: "IfStatement", test, consequent, alternate };
   }
 
   function parsePrintStatement(): Statement {
@@ -139,6 +182,19 @@ export function parse(tokens: Token[]): Program {
   }
 
   function parseExpression(): Expression {
+    let left = parsePrimary();
+
+    // Soporte para expresiones binarias (ej: x > 8)
+    while (peek() && peek().type === "OPERATOR") {
+      const operator = String(consume("OPERATOR").value);
+      const right = parsePrimary();
+      left = { type: "BinaryExpression", operator, left, right };
+    }
+
+    return left;
+  }
+
+  function parsePrimary(): Expression {
     const token = peek();
     if (!token) throw new Error("Fin inesperada de la entrada");
 
@@ -154,8 +210,10 @@ export function parse(tokens: Token[]): Program {
       consume(token.type);
       return { type: "Literal", value: token.type === "TRUE" };
     }
-    // Puedes agregar más casos para identificadores, llamadas, etc.
-
+    if (token.type === "IDENTIFIER") {
+      consume("IDENTIFIER");
+      return { type: "Identifier", name: String(token.value) };
+    }
     throw new Error(`Expresión no soportada: ${token.type}`);
   }
 
