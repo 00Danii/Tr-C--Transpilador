@@ -67,6 +67,15 @@ export function parse(tokens: Token[]): Program {
   }
 
   function parseStatement(): Statement {
+    const token = peek();
+
+    // Soporte para comentarios de línea y bloque
+    if (token.type === "LINE_COMMENT" || token.type === "BLOCK_COMMENT") {
+      consume();
+      return { type: "CommentStatement", value: String(token.value) };
+    }
+
+    // Soporte para declaraciones de variables
     if (
       ["INT_TYPE", "DOUBLE_TYPE", "BOOLEAN_TYPE", "STRING_TYPE"].includes(
         peek().type
