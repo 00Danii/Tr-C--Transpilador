@@ -81,6 +81,24 @@ export function transpileCode(
       return generateJs(ast);
     }
 
+    // java -> python
+    if (fromLang === "java" && toLang === "python") {
+      const tokens = javaTokenize(code);
+      console.log(tokens);
+      const ast = javaParse(tokens);
+      console.log(ast);
+      return generatePython(ast);
+    }
+
+    // java -> php
+    if (fromLang === "java" && toLang === "php") {
+      const tokens = javaTokenize(code);
+      console.log(tokens);
+      const ast = javaParse(tokens);
+      console.log(ast);
+      return generatePhp(ast);
+    }
+
     // Otros casos...
     return "// Transpilación no soportada para estos lenguajes.";
   } catch (err: any) {

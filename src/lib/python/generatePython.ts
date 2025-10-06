@@ -214,6 +214,10 @@ export function generatePython(node: Program | Statement | Expression): string {
     case "MemberExpression":
       return `${generatePython(node.object)}[${generatePython(node.property)}]`;
 
+    case "MainMethod":
+      // Simplemente genera el cuerpo de statements
+      return node.body.map(generatePython).join("");
+
     default:
       return "# [NO SOPORTADO]";
   }

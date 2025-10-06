@@ -201,6 +201,10 @@ export function generatePhp(
       // $arr[0] en PHP
       return `${generatePhp(node.object)}[${generatePhp(node.property)}]`;
 
+    case "MainMethod":
+      // Simplemente genera el cuerpo de statements
+      return node.body.map(generatePhp).join("");
+
     default:
       return "";
   }
