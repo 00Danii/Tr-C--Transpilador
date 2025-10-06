@@ -199,6 +199,10 @@ export function generateJs(node: Program | Statement | Expression): string {
     case "MemberExpression":
       return `${generateJs(node.object)}[${generateJs(node.property)}]`;
 
+    case "MainMethod":
+      // Simplemente genera el cuerpo de statements
+      return node.body.map(generateJs).join("");
+
     default:
       return "// [NO SOPORTADO]\n";
   }
