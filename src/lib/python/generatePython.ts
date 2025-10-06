@@ -216,7 +216,7 @@ export function generatePython(node: Program | Statement | Expression): string {
 
     case "MainMethod":
       // Simplemente genera el cuerpo de statements
-      return node.body.map(generatePython).join("");
+      return node.body.map(generatePython).join("\n");
 
     default:
       return "# [NO SOPORTADO]";
