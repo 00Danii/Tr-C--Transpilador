@@ -1,4 +1,4 @@
-import { Expression, IfStatement, Program, Statement } from "../ast";
+import { Expression, Identifier, IfStatement, Program, Statement } from "../ast";
 import { Token } from "./lexer";
 
 export function parse(tokens: Token[]): Program {
@@ -10,9 +10,13 @@ export function parse(tokens: Token[]): Program {
 
   function consume(type?: string): Token {
     const token = tokens[current];
-    if (!token) throw new Error("Fin inesperada de la entrada");
+    if (!token) return { type: "EOF", value: "" } as Token;
     if (type && token.type !== type) {
-      throw new Error(`Se esperaba ${type}, pero se obtuvo ${token.type}`);
+      // En vez de throw, retorna un comentario especial
+      return {
+        type: "ERROR",
+        value: `[NO SOPORTADO: se esperaba ${type}, pero se obtuvo ${token.type}]`,
+      } as Token;
     }
     current++;
     return token;
@@ -33,7 +37,6 @@ export function parse(tokens: Token[]): Program {
   }
 
   function parseClassMember(): Statement {
-    // Busca el método main o métodos adicionales
     if (
       peek().type === "PUBLIC" &&
       peek(1).type === "STATIC" &&
@@ -42,8 +45,7 @@ export function parse(tokens: Token[]): Program {
     ) {
       return parseMainMethod();
     }
-    // Aquí podrías agregar parseo de otros métodos
-    throw new Error("Solo se soporta el método main en esta versión");
+    return { type: "CommentStatement", value: "[NO SOPORTADO: solo main]" };
   }
 
   function parseMainMethod(): Statement {
@@ -69,37 +71,56 @@ export function parse(tokens: Token[]): Program {
   function parseStatement(): Statement {
     const token = peek();
 
-    // Soporte para comentarios de línea y bloque
+    // Comentarios
     if (token.type === "LINE_COMMENT" || token.type === "BLOCK_COMMENT") {
       consume();
       return { type: "CommentStatement", value: String(token.value) };
     }
 
-    // Soporte para declaraciones de variables
+    // Bloques independientes
+    if (token.type === "PUNCTUATION" && token.value === "{") {
+      return { type: "BlockStatement", body: parseBlock() };
+    }
+
+    // Declaración de variable
     if (
       ["INT_TYPE", "DOUBLE_TYPE", "BOOLEAN_TYPE", "STRING_TYPE"].includes(
-        peek().type
+        token.type
       )
     ) {
       return parseVariableDeclaration();
     }
 
-    // Soporte para System.out.println y System.out.print
-    if (peek().type === "PRINT") {
+    // Print
+    if (token.type === "PRINT") {
       return parsePrintStatement();
     }
 
-    // Soporte para if, else if, else
-    if (peek().type === "IF") {
+    // If
+    if (token.type === "IF") {
       return parseIfStatement();
     }
 
-    // Soporte para do while
-    if (peek().type === "DO") {
+    // Do While
+    if (token.type === "DO") {
       return parseDoWhileStatement();
     }
 
-    // Soporte para Incremento y decremento (++, --)
+    // While
+    if (token.type === "WHILE") {
+      return parseWhileStatement();
+    }
+
+    // For
+    if (token.type === "FOR") {
+      return parseForStatement();
+    }
+
+    // Try-Catch-Finally
+    if (token.type === "TRY") {
+      return parseTryStatement();
+    }
+
     // x++;
     if (token.type === "IDENTIFIER" && peek(1)?.type === "INCREMENT") {
       const name = String(consume("IDENTIFIER").value);
@@ -146,28 +167,138 @@ export function parse(tokens: Token[]): Program {
       };
     }
 
-    // Soporte para while
-    if (peek().type === "WHILE") {
-      return parseWhileStatement();
-    }
-
-    // Si no es ningún caso especial, intenta parsear una expresión
+    // Si es expresión suelta
     if (
       token.type === "IDENTIFIER" ||
       token.type === "NUMBER" ||
       token.type === "STRING" ||
       token.type === "TRUE" ||
-      token.type === "FALSE"
+      token.type === "FALSE" ||
+      (token.type === "PUNCTUATION" && token.value === "(")
     ) {
       const expr = parseExpression();
-      // Si hay punto y coma, consúmelo
       if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
         consume("PUNCTUATION");
       }
       return { type: "ExpressionStatement", expression: expr };
     }
 
-    throw new Error(`[NO SOPORTADO: ${token.type}, valor: ${token.value}]`);
+    // No soportado
+    consume();
+    return {
+      type: "CommentStatement",
+      value: `[NO SOPORTADO: ${token.type}, valor: ${token.value}]`,
+    };
+  }
+
+  function parseBlock(): Statement[] {
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    return body;
+  }
+
+  function parseForStatement(): Statement {
+    consume("FOR");
+    consume("PUNCTUATION"); // (
+    let init: Statement | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ";")) {
+      init = parseForInitOrUpdate();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+    } else {
+      consume("PUNCTUATION");
+    }
+    let test: Expression | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ";")) {
+      test = parseExpression();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+    } else {
+      consume("PUNCTUATION");
+    }
+    let update: Statement | null = null;
+    if (peek() && !(peek().type === "PUNCTUATION" && peek().value === ")")) {
+      update = parseForInitOrUpdate();
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ")") {
+        consume("PUNCTUATION");
+      }
+    } else {
+      consume("PUNCTUATION");
+    }
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    return { type: "ForStatement", init, test, update, body };
+  }
+
+  function parseForInitOrUpdate(): Statement | null {
+    const token = peek();
+    if (
+      !token ||
+      (token.type === "PUNCTUATION" &&
+        (token.value === ";" || token.value === ")"))
+    ) {
+      return null;
+    }
+    // x++
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "INCREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("INCREMENT");
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "+",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+    // x--
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "DECREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("DECREMENT");
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "-",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+    // VariableDeclaration
+    if (
+      token.type === "INT_TYPE" ||
+      token.type === "DOUBLE_TYPE" ||
+      token.type === "BOOLEAN_TYPE" ||
+      token.type === "STRING_TYPE"
+    ) {
+      return parseVariableDeclaration();
+    }
+    // ExpressionStatement
+    const expr = parseExpression();
+    return { type: "ExpressionStatement", expression: expr };
   }
 
   function parseWhileStatement(): Statement {
@@ -229,7 +360,7 @@ export function parse(tokens: Token[]): Program {
         consume("PUNCTUATION"); // }
         alternate = {
           type: "IfStatement",
-          test: { type: "Literal", value: true }, // else: test siempre true
+          test: { type: "Literal", value: true },
           consequent: elseBody,
         };
       }
@@ -242,11 +373,10 @@ export function parse(tokens: Token[]): Program {
     consume("PRINT");
     consume("PUNCTUATION"); // (
     const args: Expression[] = [];
-    if (peek().type !== "PUNCTUATION" || peek().value !== ")") {
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === ")")) {
       args.push(parseExpression());
-      while (peek().type === "PUNCTUATION" && peek().value === ",") {
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
         consume("PUNCTUATION");
-        args.push(parseExpression());
       }
     }
     consume("PUNCTUATION"); // )
@@ -262,62 +392,243 @@ export function parse(tokens: Token[]): Program {
   }
 
   function parseVariableDeclaration(): Statement {
-    const varType = consume().type; // INT_TYPE, DOUBLE_TYPE, etc.
-    const name = String(consume("IDENTIFIER").value);
-    consume("OPERATOR"); // =
-    const value = parseExpression();
-    consume("PUNCTUATION"); // ;
+    const varTypeToken = consume(); // INT_TYPE, DOUBLE_TYPE, etc.
+    let isArray = false;
 
-    // Mapeo de tipo de token a tipo de Java
+    // Detecta int[] o double[]
+    if (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+      consume("PUNCTUATION"); // [
+      consume("PUNCTUATION"); // ]
+      isArray = true;
+    }
+
+    const name = String(consume("IDENTIFIER").value);
+
+    consume("OPERATOR"); // =
+
+    // Soporte para inicialización de arreglos: {1, 2, 3}
+    let value: Expression;
+    if (
+      isArray &&
+      peek() &&
+      peek().type === "PUNCTUATION" &&
+      peek().value === "{"
+    ) {
+      consume("PUNCTUATION"); // {
+      const elements: Expression[] = [];
+      while (peek() && peek().type !== "PUNCTUATION" && peek().value !== "}") {
+        elements.push(parseExpression());
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // }
+      value = { type: "ArrayExpression", elements };
+    } else {
+      value = parseExpression();
+    }
+
+    if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+      consume("PUNCTUATION");
+    }
+
     const typeMap: Record<string, string> = {
-      INT_TYPE: "int",
-      DOUBLE_TYPE: "double",
-      BOOLEAN_TYPE: "boolean",
-      STRING_TYPE: "String",
+      INT_TYPE: isArray ? "int[]" : "int",
+      DOUBLE_TYPE: isArray ? "double[]" : "double",
+      BOOLEAN_TYPE: isArray ? "boolean[]" : "boolean",
+      STRING_TYPE: isArray ? "String[]" : "String",
     };
 
     return {
       type: "VariableDeclaration",
-      kind: "",
+      kind: typeMap[varTypeToken.type] || varTypeToken.type,
       name,
       value,
     };
   }
 
+  function parseTryStatement(): Statement {
+    consume("TRY");
+    const block = parseBlock();
+
+    let handler;
+    if (peek() && peek().type === "CATCH") {
+      consume("CATCH");
+      consume("PUNCTUATION"); // (
+      let paramType = null;
+      if (
+        peek() &&
+        (peek().type === "IDENTIFIER" ||
+          ["INT_TYPE", "DOUBLE_TYPE", "BOOLEAN_TYPE", "STRING_TYPE"].includes(
+            peek().type
+          ))
+      ) {
+        paramType = consume().value;
+      }
+      let paramName = null;
+      if (peek() && peek().type === "IDENTIFIER") {
+        paramName = consume("IDENTIFIER").value;
+      }
+      consume("PUNCTUATION"); // )
+      const body = parseBlock();
+      handler = {
+        param: {
+          type: "Identifier",
+          name:
+            typeof paramName === "string" ? paramName : String(paramName ?? ""),
+          javaType:
+            typeof paramType === "string" ? paramType : String(paramType ?? ""),
+        } as Identifier,
+        body,
+      };
+    }
+
+    let finalizer;
+    if (peek() && peek().type === "FINALLY") {
+      consume("FINALLY");
+      finalizer = parseBlock();
+    }
+
+    return { type: "TryStatement", block, handler, finalizer };
+  }
+
   function parseExpression(): Expression {
     let left = parsePrimary();
-
-    // Soporte para expresiones binarias (ej: x > 8)
     while (peek() && peek().type === "OPERATOR") {
       const operator = String(consume("OPERATOR").value);
       const right = parsePrimary();
       left = { type: "BinaryExpression", operator, left, right };
     }
-
     return left;
   }
 
   function parsePrimary(): Expression {
     const token = peek();
-    if (!token) throw new Error("Fin inesperada de la entrada");
+    if (!token)
+      return { type: "CommentStatement", value: "[NO SOPORTADO: EOF]" };
 
-    if (token.type === "NUMBER") {
-      consume("NUMBER");
+    // Arreglos: [1, 2, x]
+    if (token.type === "PUNCTUATION" && token.value === "[") {
+      consume("PUNCTUATION"); // [
+      const elements: Expression[] = [];
+      while (
+        peek() &&
+        !(peek().type === "PUNCTUATION" && peek().value === "]")
+      ) {
+        elements.push(parseExpression());
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // ]
+      return { type: "ArrayExpression", elements };
+    }
+
+    // Números negativos
+    if (token.type === "OPERATOR" && token.value === "-") {
+      consume("OPERATOR");
+      const next = parsePrimary();
+      if (next.type === "Literal" && typeof next.value === "number") {
+        return { type: "Literal", value: -next.value };
+      }
+      return { type: "UnaryExpression", operator: "-", argument: next };
+    }
+
+    // true/false
+    if (token.type === "TRUE") {
+      consume();
+      return { type: "Literal", value: true };
+    }
+    if (token.type === "FALSE") {
+      consume();
+      return { type: "Literal", value: false };
+    }
+
+    if (token.type === "NUMBER" || token.type === "STRING") {
+      consume();
       return { type: "Literal", value: token.value };
     }
-    if (token.type === "STRING") {
-      consume("STRING");
-      return { type: "Literal", value: token.value };
-    }
-    if (token.type === "TRUE" || token.type === "FALSE") {
-      consume(token.type);
-      return { type: "Literal", value: token.type === "TRUE" };
-    }
+
     if (token.type === "IDENTIFIER") {
-      consume("IDENTIFIER");
-      return { type: "Identifier", name: String(token.value) };
+      consume();
+      let expr: Expression = { type: "Identifier", name: String(token.value) };
+
+      // Acceso a arreglo: arr[0]
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+        consume("PUNCTUATION"); // [
+        const property = parseExpression();
+        consume("PUNCTUATION"); // ]
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property,
+        };
+      }
+
+      // Llamada a función
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
+        consume("PUNCTUATION"); // (
+        const args: Expression[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          args.push(parseExpression());
+          if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+            consume("PUNCTUATION");
+          }
+        }
+        consume("PUNCTUATION"); // )
+        return {
+          type: "CallExpression",
+          callee: expr,
+          arguments: args,
+        };
+      }
+
+      return expr;
     }
-    throw new Error(`Expresión no soportada: ${token.type}`);
+
+    // Función flecha con paréntesis
+    if (token.type === "PUNCTUATION" && token.value === "(") {
+      let i = 1;
+      while (
+        peek(i) &&
+        !(peek(i).type === "PUNCTUATION" && peek(i).value === ")")
+      ) {
+        i++;
+      }
+      if (peek(i + 1) && peek(i + 1).type === "ARROW") {
+        consume("PUNCTUATION"); // (
+        const params: string[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          if (peek().type === "IDENTIFIER") {
+            params.push(String(consume("IDENTIFIER").value));
+            if (
+              peek() &&
+              peek().type === "PUNCTUATION" &&
+              peek().value === ","
+            ) {
+              consume("PUNCTUATION");
+            }
+          } else {
+            consume();
+          }
+        }
+        consume("PUNCTUATION"); // )
+        consume("ARROW");
+        const body = parseExpression();
+        return { type: "LambdaExpression", params, body };
+      }
+    }
+
+    return {
+      type: "CommentStatement",
+      value: `[NO SOPORTADO: ${token.type}, valor: ${token.value}]`,
+    };
   }
 
   return parseProgram();

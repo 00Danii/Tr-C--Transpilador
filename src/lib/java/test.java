@@ -30,6 +30,38 @@ public class Main {
     else {
       System.out.println("else");
     }
+
+    // DO-WHILE
+    do {
+      // cuerpo
+      System.out.println("if");
+      x++;
+    } while (x);
+
+
+    // FOR
+    for (int i = 0; i < 10; i++) {
+      System.out.println(i);
+    }
+
+    // FOR 
+    for (int i = 0; i < 10; i += 2) {
+      System.out.println(i);
+    }
+
+    // ARREGLOS
+    int[] arr = {1, 2, 3};
+    System.out.println(arr[0]);
+
+
+    // TRY CATCH
+    try {
+      x = 1 / 0;
+    } catch (Exception e) {
+      System.out.println("Error");
+    } finally {
+      System.out.println("Fin");
+    }
     
   }
 }

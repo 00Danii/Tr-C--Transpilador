@@ -43,7 +43,8 @@ export type Expression =
   | UnaryExpression
   | LambdaExpression
   | ArrayExpression
-  | MemberExpression;
+  | MemberExpression
+  | CommentStatement;
 
 export type BinaryExpression = {
   type: "BinaryExpression";
@@ -55,6 +56,7 @@ export type BinaryExpression = {
 export type Identifier = {
   type: "Identifier";
   name: string;
+  javaType?: string;
 };
 
 export type Literal = {
