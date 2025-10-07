@@ -99,6 +99,22 @@ export function parse(tokens: Token[]): Program {
       return parseDoWhileStatement();
     }
 
+    // Si no es ningún caso especial, intenta parsear una expresión
+    if (
+      token.type === "IDENTIFIER" ||
+      token.type === "NUMBER" ||
+      token.type === "STRING" ||
+      token.type === "TRUE" ||
+      token.type === "FALSE"
+    ) {
+      const expr = parseExpression();
+      // Si hay punto y coma, consúmelo
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+      return { type: "ExpressionStatement", expression: expr };
+    }
+
     throw new Error(`[NO SOPORTADO: ${token.type}, valor: ${token.value}]`);
   }
 
