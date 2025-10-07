@@ -94,7 +94,28 @@ export function parse(tokens: Token[]): Program {
       return parseIfStatement();
     }
 
-    throw new Error("Statement no soportado aún");
+    // Soporte para do while
+    if (peek().type === "DO") {
+      return parseDoWhileStatement();
+    }
+
+    throw new Error(`[NO SOPORTADO: ${token.type}, valor: ${token.value}]`);
+  }
+
+  function parseDoWhileStatement(): Statement {
+    consume("DO");
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    consume("WHILE");
+    consume("PUNCTUATION"); // (
+    const test = parseExpression();
+    consume("PUNCTUATION"); // )
+    consume("PUNCTUATION"); // ;
+    return { type: "DoWhileStatement", body, test };
   }
 
   function parseIfStatement(): Statement {
