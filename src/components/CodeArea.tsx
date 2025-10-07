@@ -63,7 +63,7 @@ export function CodeArea({
   // Selecciona el tema de CodeMirror según el tema actual
   // Alterna el fondo y el tema según el modo
   const codeMirrorTheme =
-    theme === "dark"
+    theme === "dark" || theme === "system"
       ? materialInit({
           settings: {
             caret: "#ffffff",
