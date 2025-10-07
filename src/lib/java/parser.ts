@@ -146,6 +146,11 @@ export function parse(tokens: Token[]): Program {
       };
     }
 
+    // Soporte para while
+    if (peek().type === "WHILE") {
+      return parseWhileStatement();
+    }
+
     // Si no es ningún caso especial, intenta parsear una expresión
     if (
       token.type === "IDENTIFIER" ||
@@ -163,6 +168,20 @@ export function parse(tokens: Token[]): Program {
     }
 
     throw new Error(`[NO SOPORTADO: ${token.type}, valor: ${token.value}]`);
+  }
+
+  function parseWhileStatement(): Statement {
+    consume("WHILE");
+    consume("PUNCTUATION"); // (
+    const test = parseExpression();
+    consume("PUNCTUATION"); // )
+    consume("PUNCTUATION"); // {
+    const body: Statement[] = [];
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      body.push(parseStatement());
+    }
+    consume("PUNCTUATION"); // }
+    return { type: "WhileStatement", test, body };
   }
 
   function parseDoWhileStatement(): Statement {
