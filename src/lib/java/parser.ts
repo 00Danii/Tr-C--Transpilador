@@ -99,6 +99,53 @@ export function parse(tokens: Token[]): Program {
       return parseDoWhileStatement();
     }
 
+    // Soporte para Incremento y decremento (++, --)
+    // x++;
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "INCREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("INCREMENT");
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "+",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+
+    // x--;
+    if (token.type === "IDENTIFIER" && peek(1)?.type === "DECREMENT") {
+      const name = String(consume("IDENTIFIER").value);
+      consume("DECREMENT");
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ";") {
+        consume("PUNCTUATION");
+      }
+      return {
+        type: "ExpressionStatement",
+        expression: {
+          type: "BinaryExpression",
+          operator: "=",
+          left: { type: "Identifier", name },
+          right: {
+            type: "BinaryExpression",
+            operator: "-",
+            left: { type: "Identifier", name },
+            right: { type: "Literal", value: 1 },
+          },
+        },
+      };
+    }
+
     // Si no es ningún caso especial, intenta parsear una expresión
     if (
       token.type === "IDENTIFIER" ||
