@@ -21,6 +21,10 @@ export function CodeTranspiler() {
   const [showAnimation, setShowAnimation] = useState(false);
 
   useEffect(() => {
+    setInputCode(getLanguagePlaceholder(inputLanguage));
+  }, [inputLanguage]);
+
+  useEffect(() => {
     if (isTranspiling) {
       setShowAnimation(true);
       const timer = setTimeout(() => setShowAnimation(false), 2000);
@@ -105,6 +109,21 @@ export function CodeTranspiler() {
     );
   };
 
+  function getLanguagePlaceholder(language: string) {
+    switch (language) {
+      case "php":
+        return `<?php\n// Tu código aquí\n?>`;
+      case "java":
+        return `public class Main {\n  public static void main(String[] args) {\n    // Tu código aquí\n  }\n}`;
+      case "python":
+        return `# Escribe tu código Python aquí`;
+      case "javascript":
+        return `// Escribe tu código JavaScript aquí`;
+      default:
+        return `Escribe o pega tu código aquí...`;
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 pb-12 space-y-8">
@@ -132,9 +151,10 @@ export function CodeTranspiler() {
             onCopy={() => handleCopyToClipboard("input")}
             onChange={setInputCode}
             icon={<Code2 className="h-5 w-5 text-primary/60" />}
-            placeholder={`Escribe o pega tu código ${getLanguageLabel(
-              inputLanguage
-            )} aquí...`}
+            // placeholder={`Escribe o pega tu código ${getLanguageLabel(
+            //   inputLanguage
+            // )} aquí...`}
+            // placeholder={getLanguagePlaceholder(inputLanguage)}
           ></CodeArea>
 
           <div className="flex justify-center xl:hidden">
