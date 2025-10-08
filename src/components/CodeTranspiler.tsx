@@ -19,10 +19,9 @@ export function CodeTranspiler() {
   const [isTranspiling, setIsTranspiling] = useState(false);
   const [error, setError] = useState("");
   const [showAnimation, setShowAnimation] = useState(false);
-
-  useEffect(() => {
-    setInputCode(getLanguagePlaceholder(inputLanguage));
-  }, [inputLanguage]);
+  const [codeByLanguage, setCodeByLanguage] = useState<{
+    [lang: string]: string;
+  }>({});
 
   useEffect(() => {
     if (isTranspiling) {
@@ -115,14 +114,19 @@ export function CodeTranspiler() {
         return `<?php\n// Tu código aquí\n?>`;
       case "java":
         return `public class Main {\n  public static void main(String[] args) {\n    // Tu código aquí\n  }\n}`;
-      case "python":
-        return `# Escribe tu código Python aquí`;
-      case "javascript":
-        return `// Escribe tu código JavaScript aquí`;
       default:
-        return `Escribe o pega tu código aquí...`;
+        return ``;
     }
   }
+
+  const handleInputLanguageChange = (newLang: string) => {
+    setCodeByLanguage((prev) => ({
+      ...prev,
+      [inputLanguage]: inputCode,
+    }));
+    setInputLanguage(newLang);
+    setInputCode(codeByLanguage[newLang] ?? getLanguagePlaceholder(newLang));
+  };
 
   return (
     <div className="min-h-screen">
@@ -138,7 +142,7 @@ export function CodeTranspiler() {
                   <LanguageSelector
                     label=""
                     value={inputLanguage}
-                    onChange={setInputLanguage}
+                    onChange={handleInputLanguageChange}
                     languages={PROGRAMMING_LANGUAGES}
                   />
                 </div>
@@ -151,10 +155,9 @@ export function CodeTranspiler() {
             onCopy={() => handleCopyToClipboard("input")}
             onChange={setInputCode}
             icon={<Code2 className="h-5 w-5 text-primary/60" />}
-            // placeholder={`Escribe o pega tu código ${getLanguageLabel(
-            //   inputLanguage
-            // )} aquí...`}
-            // placeholder={getLanguagePlaceholder(inputLanguage)}
+            placeholder={`Escribe o pega tu código ${getLanguageLabel(
+              inputLanguage
+            )} aquí...`}
           ></CodeArea>
 
           <div className="flex justify-center xl:hidden">
