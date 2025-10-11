@@ -111,6 +111,7 @@ export type DoWhileStatement = {
   type: "DoWhileStatement";
   body: Statement[];
   test: Expression;
+  until?: boolean;
 };
 
 export type UnaryExpression = {
