@@ -148,6 +148,17 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
+    if (input.startsWith("De Otro Modo", i)) {
+      tokens.push({
+        type: "DE_OTRO_MODO",
+        value: "De Otro Modo",
+        line,
+        column: col,
+      });
+      advance("De Otro Modo".length);
+      continue;
+    }
+
     // Reconoce "Hasta Que" como un solo token
     if (input.startsWith("Hasta Que", i)) {
       tokens.push({
