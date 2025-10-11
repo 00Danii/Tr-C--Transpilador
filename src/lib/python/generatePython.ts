@@ -96,6 +96,17 @@ export function generatePython(node: Program | Statement | Expression): string {
         .join("\n")}`;
 
     case "ForStatement": {
+      // Soporte para for de PSeInt/Python
+      if (node.varName && node.rangeExpr && node.body) {
+        let code = `for ${node.varName} in ${generatePython(
+          node.rangeExpr
+        )}:\n`;
+        code += node.body
+          .map((s: Statement) => "    " + generatePython(s))
+          .join("\n");
+        return code;
+      }
+
       // Soporte para for clásico con incremento personalizado
       let varName: string | undefined;
       let start: string | undefined;
@@ -183,7 +194,11 @@ export function generatePython(node: Program | Statement | Expression): string {
       code += node.body
         .map((s: Statement) => "    " + generatePython(s))
         .join("\n");
-      code += `\n    if not (${generatePython(node.test)}):\n        break`;
+      if (node.until) {
+        code += `\n    if ${generatePython(node.test)}:\n        break`;
+      } else {
+        code += `\n    if not (${generatePython(node.test)}):\n        break`;
+      }
       return code;
     }
 
