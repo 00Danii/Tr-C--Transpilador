@@ -8,11 +8,13 @@ export type Statement =
   | ReturnStatement
   | ExpressionStatement
   | VariableDeclaration
+  | ArrayDeclaration
   | CommentStatement
   | IfStatement
   | WhileStatement
   | ForStatement
   | DoWhileStatement
+  | SwitchStatement
   | TryStatement
   | BlockStatement
   | MainMethod
@@ -37,6 +39,7 @@ export type ExpressionStatement = {
 
 export type Expression =
   | BinaryExpression
+  | LogicalExpression
   | Identifier
   | Literal
   | CallExpression
@@ -150,6 +153,34 @@ export type MemberExpression = {
   type: "MemberExpression";
   object: Expression;
   property: Expression;
+};
+
+export type SwitchStatement = {
+  type: "SwitchStatement";
+  discriminant: Expression;
+  cases: SwitchCase[];
+  defaultCase?: Statement[];
+};
+
+export type SwitchCase = {
+  test: Expression | null; // null para default
+  consequent: Statement[];
+};
+
+// Para operadores lógicos
+export type LogicalExpression = {
+  type: "LogicalExpression";
+  operator: string; // "&&", "||", "!"
+  left: Expression;
+  right?: Expression; // right es opcional para "!"
+};
+
+// Para arreglos multidimensionales
+export type ArrayDeclaration = {
+  type: "ArrayDeclaration";
+  name: string;
+  dimensions: Expression[];
+  initialValue?: ArrayExpression;
 };
 
 export interface MainMethod {
