@@ -11,6 +11,9 @@ import { generateJava } from "./java/generateJava";
 import { java } from "@codemirror/lang-java";
 import { tokenize as javaTokenize } from "./java/lexer";
 import { parse as javaParse } from "./java/parser";
+// Import PSeInt modules
+import { tokenize as pseintTokenize } from "./pseint/lexer";
+import { parse as pseintParse } from "./pseint/parser";
 
 export function transpileCode(
   code: string,
@@ -97,6 +100,15 @@ export function transpileCode(
       const ast = javaParse(tokens);
       console.log(ast);
       return generatePhp(ast);
+    }
+
+    // pseint -> python
+    if (fromLang === "pseint" && toLang === "python") {
+      const tokens = pseintTokenize(code);
+      console.log(tokens);
+      const ast = pseintParse(tokens);
+      console.log(ast);
+      return generatePython(ast);
     }
 
     // Otros casos...
