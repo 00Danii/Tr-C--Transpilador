@@ -16,11 +16,15 @@ export function generatePython(node: Program | Statement | Expression): string {
     case "ExpressionStatement":
       return generatePython(node.expression);
 
-    case "BinaryExpression":
-      // Soporta asignaciones y operaciones
+    case "BinaryExpression": {
+      if (node.operator === "=") {
+        return `${generatePython(node.left)} = ${generatePython(node.right)}`;
+      }
+      // Otros operadores
       return `${generatePython(node.left)} ${node.operator} ${generatePython(
         node.right
       )}`;
+    }
 
     case "Identifier":
       return node.name;
@@ -232,6 +236,61 @@ export function generatePython(node: Program | Statement | Expression): string {
     case "MainMethod":
       // Simplemente genera el cuerpo de statements
       return node.body.map(generatePython).join("\n");
+
+    case "SwitchStatement": {
+      let code = "";
+      const discrim = generatePython(node.discriminant);
+      node.cases.forEach((c, idx) => {
+        if (c.test !== null) {
+          const cond = `${discrim} == ${generatePython(c.test)}`;
+          code += idx === 0 ? `if ${cond}:\n` : `\nelif ${cond}:\n`;
+          code += c.consequent
+            .map((s: Statement) => "    " + generatePython(s))
+            .join("\n");
+        } else {
+          // Caso default
+          code += `else:\n`;
+          code += c.consequent
+            .map((s: Statement) => "    " + generatePython(s))
+            .join("\n");
+        }
+      });
+      // Si tienes node.defaultCase, puedes agregarlo aquí también
+      if (node.defaultCase && node.defaultCase.length > 0) {
+        code += `\nelse:\n`;
+        code += node.defaultCase
+          .map((s: Statement) => "    " + generatePython(s))
+          .join("\n");
+      }
+      return code;
+    }
+
+    case "LogicalExpression": {
+      if (node.operator === "!") {
+        return `not (${generatePython(node.left)})`;
+      }
+      if (node.operator === "&&") {
+        return `${generatePython(node.left)} and ${generatePython(node.right)}`;
+      }
+      if (node.operator === "||") {
+        return `${generatePython(node.left)} or ${generatePython(node.right)}`;
+      }
+      // Otros operadores lógicos
+      return `${generatePython(node.left)} ${node.operator} ${generatePython(
+        node.right
+      )}`;
+    }
+
+    case "ArrayDeclaration": {
+      const dims = node.dimensions.map(generatePython);
+      if (dims.length === 1) {
+        return `${node.name} = [None] * ${dims[0]}`;
+      } else if (dims.length === 2) {
+        return `${node.name} = [[None] * ${dims[1]} for _ in range(${dims[0]})]`;
+      } else {
+        return `${node.name} = []  # [NO SOPORTADO: arreglos de más de 2 dimensiones]`;
+      }
+    }
 
     default:
       return "# [NO SOPORTADO]";

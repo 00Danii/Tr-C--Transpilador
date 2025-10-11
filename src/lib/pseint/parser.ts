@@ -18,6 +18,7 @@ import {
   CallExpression,
   Identifier,
   Literal,
+  SwitchCase,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -142,13 +143,29 @@ export function parse(tokens: Token[]): Program {
       };
     }
 
-    // Asignación: x <- expr  o x = expr
+    // Asignación: x <- expr  o x = expr  o x[0] <- expr
     if (
-      token?.type === "IDENTIFIER" &&
+      (token?.type === "IDENTIFIER" ||
+        (token?.type === "IDENTIFIER" &&
+          peek(1)?.type === "DELIMITER" &&
+          peek(1)?.value === "[")) &&
       peek(1)?.type === "OPERATOR" &&
       (peek(1)?.value === "<-" || peek(1)?.value === "=")
     ) {
-      const name = String(consume("IDENTIFIER").value);
+      // Parse el lado izquierdo (puede ser MemberExpression)
+      let left: Expression;
+      left = { type: "Identifier", name: String(consume("IDENTIFIER").value) };
+      // Si es acceso a arreglo
+      if (peek() && peek()?.type === "DELIMITER" && peek()?.value === "[") {
+        consume("DELIMITER"); // [
+        const property = parseExpression();
+        consume("DELIMITER"); // ]
+        left = {
+          type: "MemberExpression",
+          object: left,
+          property,
+        };
+      }
       consume("OPERATOR"); // <- o =
       const value = parseExpression();
       if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ";") {
@@ -159,7 +176,7 @@ export function parse(tokens: Token[]): Program {
         expression: {
           type: "BinaryExpression",
           operator: "=",
-          left: { type: "Identifier", name },
+          left,
           right: value,
         },
       };
@@ -187,30 +204,28 @@ export function parse(tokens: Token[]): Program {
     if (token?.type === "DIMENSION") {
       consume("DIMENSION");
       const name = String(consume("IDENTIFIER").value);
+      const dimensions: Expression[] = [];
       if (peek() && peek()?.type === "DELIMITER" && peek()?.value === "[") {
         consume("DELIMITER"); // [
-        const elements: Expression[] = [];
         while (
           peek() &&
-          peek()?.type !== "DELIMITER" &&
-          peek()?.value !== "]"
+          !(peek()?.type === "DELIMITER" && peek()?.value === "]")
         ) {
-          elements.push(parseExpression());
+          dimensions.push(parseExpression());
           if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ",") {
             consume("DELIMITER");
           }
         }
         consume("DELIMITER"); // ]
-        if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ";") {
-          consume("DELIMITER");
-        }
-        return {
-          type: "VariableDeclaration",
-          kind: "array",
-          name,
-          value: { type: "ArrayExpression", elements },
-        };
       }
+      if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ";") {
+        consume("DELIMITER");
+      }
+      return {
+        type: "ArrayDeclaration",
+        name,
+        dimensions,
+      };
     }
 
     // Si ... Entonces ... Sino ... FinSi
@@ -319,6 +334,117 @@ export function parse(tokens: Token[]): Program {
       consume("HASTA_QUE");
       const test = parseExpression();
       return { type: "DoWhileStatement", body, test, until: true };
+    }
+
+    // Switch/Segun ... Caso ... FinSegun
+    if (token?.type === "SEGUN") {
+      consume("SEGUN");
+      const discriminant = parseExpression();
+      const cases: SwitchCase[] = [];
+      let defaultCase: Statement[] | undefined;
+      while (peek() && peek()?.type !== "FINSEGUN") {
+        if (peek()?.type === "CASO") {
+          consume("CASO");
+          const test = parseExpression();
+          const consequent: Statement[] = [];
+          while (
+            peek() &&
+            peek()?.type !== "CASO" &&
+            peek()?.type !== "DE_OTRO_MODO" &&
+            peek()?.type !== "FINSEGUN"
+          ) {
+            consequent.push(parseStatement());
+          }
+          cases.push({ test, consequent });
+        } else if (peek()?.type === "DE_OTRO_MODO") {
+          consume("DE_OTRO_MODO");
+          defaultCase = [];
+          while (peek() && peek()?.type !== "FINSEGUN") {
+            defaultCase.push(parseStatement());
+          }
+        } else {
+          consume();
+        }
+      }
+      consume("FINSEGUN");
+      return {
+        type: "SwitchStatement",
+        discriminant,
+        cases,
+        defaultCase,
+      };
+    }
+
+    // Arreglos multidimensionales y con inicialización
+    if (token?.type === "DIMENSION") {
+      consume("DIMENSION");
+      const name = String(consume("IDENTIFIER").value);
+      const dimensions: Expression[] = [];
+      if (peek() && peek()?.type === "DELIMITER" && peek()?.value === "[") {
+        consume("DELIMITER"); // [
+        while (
+          peek() &&
+          !(peek()?.type === "DELIMITER" && peek()?.value === "]")
+        ) {
+          dimensions.push(parseExpression());
+          if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ",") {
+            consume("DELIMITER");
+          }
+        }
+        consume("DELIMITER"); // ]
+      }
+      let initialValue: ArrayExpression | undefined;
+      if (peek() && peek()?.type === "OPERATOR" && peek()?.value === "=") {
+        consume("OPERATOR");
+        if (peek() && peek()?.type === "DELIMITER" && peek()?.value === "{") {
+          initialValue = parsePrimary() as ArrayExpression;
+        }
+      }
+      if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ";") {
+        consume("DELIMITER");
+      }
+      return {
+        type: "ArrayDeclaration",
+        name,
+        dimensions,
+        initialValue,
+      };
+    }
+
+    // Procedimiento sin parámetros
+    if (token?.type === "PROCEDIMIENTO") {
+      consume("PROCEDIMIENTO");
+      const name = String(consume("IDENTIFIER").value);
+      const params: string[] = [];
+      if (peek() && peek()?.type === "DELIMITER" && peek()?.value === "(") {
+        consume("DELIMITER"); // (
+        while (
+          peek() &&
+          peek()?.type !== "DELIMITER" &&
+          peek()?.value !== ")"
+        ) {
+          if (peek()?.type === "IDENTIFIER") {
+            params.push(String(consume("IDENTIFIER").value));
+            if (
+              peek() &&
+              peek()?.type === "DELIMITER" &&
+              peek()?.value === ","
+            ) {
+              consume("DELIMITER");
+            }
+          } else {
+            consume();
+          }
+        }
+        consume("DELIMITER"); // )
+      }
+      // Permite procedimientos sin parámetros
+      const body: Statement[] = [];
+      while (peek() && peek()?.type !== "FINPROCEDIMIENTO") {
+        body.push(parseStatement());
+      }
+      consume("FINPROCEDIMIENTO");
+      return { type: "FunctionDeclaration", name, params, body };
     }
 
     // Funcion ... FinFuncion
@@ -435,9 +561,10 @@ export function parse(tokens: Token[]): Program {
   function parseExpression(): Expression {
     let left = parsePrimary();
     while (peek() && peek()?.type === "OPERATOR") {
-      const operator = String(consume("OPERATOR").value);
+      let operator = String(consume("OPERATOR").value);
+      // Si el operador es "<-", conviértelo a "=" solo si es una asignación
+      if (operator === "<-") operator = "=";
       const right = parsePrimary();
-      if (right === undefined) break; // Si es FinAlgoritmo, termina la expresión
       left = { type: "BinaryExpression", operator, left, right };
     }
     return left;

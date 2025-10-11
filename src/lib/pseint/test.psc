@@ -42,7 +42,7 @@ Algoritmo programaPSC
 	FinPara
 	
 	// FOR CON PASO 
-	Para j <- 0 Hasta 10 Con Paso 2
+	Para j <- 0 Hasta 10 Con Paso 3
 		Escribir j
 	FinPara
 	
@@ -64,5 +64,22 @@ Algoritmo programaPSC
   // Booleanos
   activo = VERDADERO
   activo = FALSO
+
+  // BLOQUE SWITCH
+  Segun opcion
+  	Caso 1
+  		Escribir "Elegiste uno"
+  	Caso 2
+  		Escribir "Elegiste dos"
+  	De Otro Modo
+  		Escribir "Opción inválida"
+  FinSegun
+
+	// Funcion con parametros y retorno
+  Funcion Sumar(a, b)
+    Retornar a + b
+  FinFuncion
+  resultado <- Sumar(3, 4)
+  Escribir resultado
 
 FinAlgoritmo
