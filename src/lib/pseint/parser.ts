@@ -113,7 +113,14 @@ export function parse(tokens: Token[]): Program {
     if (token?.type === "LEER") {
       consume();
       const args: Expression[] = [];
-      while (peek() && peek()?.type === "IDENTIFIER") {
+      while (
+        peek() &&
+        peek()?.type === "IDENTIFIER" &&
+        !(
+          peek(1)?.type === "OPERATOR" &&
+          (peek(1)?.value === "<-" || peek(1)?.value === "=")
+        )
+      ) {
         args.push({
           type: "Identifier",
           name: String(consume("IDENTIFIER").value),
@@ -125,7 +132,6 @@ export function parse(tokens: Token[]): Program {
       if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ";") {
         consume("DELIMITER");
       }
-      // Se puede mapear a input en Python, pero aquí solo lo dejamos como CallExpression
       return {
         type: "ExpressionStatement",
         expression: {
@@ -276,6 +282,10 @@ export function parse(tokens: Token[]): Program {
           consume();
         step = parseExpression();
       }
+      // Aquí consume opcionalmente HACER
+      if (peek() && peek()?.type === "HACER") {
+        consume("HACER");
+      }
       const body: Statement[] = [];
       while (peek() && peek()?.type !== "FINPARA") {
         body.push(parseStatement());
@@ -399,6 +409,14 @@ export function parse(tokens: Token[]): Program {
       token?.type === "STRING" ||
       token?.type === "BOOLEAN"
     ) {
+      // Si el identificador es FinAlgoritmo, lo ignoramos
+      if (
+        token?.type === "IDENTIFIER" &&
+        token?.value.toUpperCase() === "FINALGORITMO"
+      ) {
+        consume();
+        return undefined;
+      }
       const expr = parseExpression();
       if (peek() && peek()?.type === "DELIMITER" && peek()?.value === ";") {
         consume("DELIMITER");
@@ -419,6 +437,7 @@ export function parse(tokens: Token[]): Program {
     while (peek() && peek()?.type === "OPERATOR") {
       const operator = String(consume("OPERATOR").value);
       const right = parsePrimary();
+      if (right === undefined) break; // Si es FinAlgoritmo, termina la expresión
       left = { type: "BinaryExpression", operator, left, right };
     }
     return left;
@@ -452,6 +471,11 @@ export function parse(tokens: Token[]): Program {
 
     // Identificadores y llamadas
     if (token.type === "IDENTIFIER") {
+      // Ignorar FinAlgoritmo como identificador en expresiones
+      if (token.value.toUpperCase() === "FINALGORITMO") {
+        consume();
+        return { type: "CommentStatement", value: "" }; // o retorna undefined
+      }
       consume();
       let expr: Expression = { type: "Identifier", name: String(token.value) };
 
