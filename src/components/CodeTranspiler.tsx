@@ -114,6 +114,8 @@ export function CodeTranspiler() {
         return `<?php\n// Tu código aquí\n?>`;
       case "java":
         return `public class Main {\n  public static void main(String[] args) {\n    // Tu código aquí\n  }\n}`;
+      case "pseint":
+        return `Algoritmo Programa\n  // Hola Xochitl c:\n  // Tu código aquí\nFinAlgoritmo`;
       default:
         return ``;
     }
