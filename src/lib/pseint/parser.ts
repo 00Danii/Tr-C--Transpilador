@@ -57,18 +57,12 @@ export function parse(tokens: Token[]): Program {
   function parseStatement(): Statement {
     const token = peek();
 
-    if (
-      token?.type === "IDENTIFIER" &&
-      token?.value.toUpperCase() === "ALGORITMO"
-    ) {
+    if (token?.type === "ALGORITMO") {
       consume(); // Algoritmo
       if (peek() && peek()?.type === "IDENTIFIER") consume(); // nombre
       return undefined;
     }
-    if (
-      token?.type === "IDENTIFIER" &&
-      token?.value.toUpperCase() === "FINALGORITMO"
-    ) {
+    if (token?.type === "FINALGORITMO") {
       consume();
       return undefined;
     }
@@ -598,11 +592,6 @@ export function parse(tokens: Token[]): Program {
 
     // Identificadores y llamadas
     if (token.type === "IDENTIFIER") {
-      // Ignorar FinAlgoritmo como identificador en expresiones
-      if (token.value.toUpperCase() === "FINALGORITMO") {
-        consume();
-        return { type: "CommentStatement", value: "" }; // o retorna undefined
-      }
       consume();
       let expr: Expression = { type: "Identifier", name: String(token.value) };
 

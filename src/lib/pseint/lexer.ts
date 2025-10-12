@@ -39,6 +39,8 @@ const KEYWORDS = [
   "Como",
   "Inicio",
   "Fin",
+  "Algoritmo",
+  "FinAlgoritmo",
 ];
 
 const OPERATORS = [
