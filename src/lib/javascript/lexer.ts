@@ -21,12 +21,16 @@ export function tokenize(input: string): Token[] {
     [/^finally\b/, "FINALLY"],
     [/^\btrue\b/, "TRUE"],
     [/^\bfalse\b/, "FALSE"],
+    [/^\bswitch\b/, "SWITCH"],
+    [/^\bcase\b/, "CASE"],
+    [/^\bdefault\b/, "DEFAULT"],
+    [/^\bbreak\b/, "BREAK"],
     [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
     [/^\+\+/, "INCREMENT"],
     [/^--/, "DECREMENT"],
     [/^=>/, "ARROW"],
     [/^[\+\-\*\/%=<>!]+/, "OPERATOR"],
-    [/^[\(\)\{\}\[\];,]/, "PUNCTUATION"],
+    [/^[\(\)\{\}\[\];,:]/, "PUNCTUATION"],
   ];
 
   let code = input;
