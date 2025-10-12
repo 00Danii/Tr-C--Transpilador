@@ -82,4 +82,17 @@ Algoritmo programaPSC
   resultado <- Sumar(3, 4)
   Escribir resultado
 
+
+  // Arreglos
+  Dimension numeros[5]
+  numeros[0] <- 10
+  numeros[1] <- 20
+  numeros[2] <- 30
+  numeros[3] <- 40
+  numeros[4] <- 50
+  Escribir numeros[2]
+
+  // mostrar varios datos
+  Escribir datos[0], datos[1], datos[2]
+	
 FinAlgoritmo
