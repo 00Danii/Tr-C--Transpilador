@@ -205,6 +205,30 @@ export function generatePhp(
       // Simplemente genera el cuerpo de statements
       return node.body.map(generatePhp).join("");
 
+    case "SwitchStatement": {
+      let code = `switch (${generatePhp(node.discriminant)}) {\n`;
+      node.cases.forEach((c) => {
+        if (c.test !== null) {
+          code += `  case ${generatePhp(c.test)}:\n`;
+          code += `      ` + c.consequent.map(generatePhp).join("      ");
+          code += "      break;\n";
+        } else {
+          // Caso default
+          code += `  default:\n`;
+          code += `      ` + c.consequent.map(generatePhp).join("      ");
+          code += "      break;\n";
+        }
+      });
+      // Si tienes node.defaultCase, agrégalo como default también
+      if (node.defaultCase && node.defaultCase.length > 0) {
+        code += `  default:\n`;
+        code += `      ` + node.defaultCase.map(generatePhp).join("      ");
+        code += "      break;\n";
+      }
+      code += "}\n";
+      return code;
+    }
+
     default:
       return "";
   }
