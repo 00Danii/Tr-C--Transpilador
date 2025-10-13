@@ -68,4 +68,34 @@ $arr[2];
 echo $arr[2];
 $frutas = array("Manzana", "Naranja", "Mango");
 echo $frutas[1];
+
+
+// SWITCH CASE
+$dia = "lunes";
+switch ($dia) {
+    case "lunes":
+        echo "Hoy es lunes";
+        break;
+    case "martes":
+        echo "Hoy es martes";
+        break;
+    case "miércoles":
+        echo "Hoy es miércoles";
+        break;
+    case "jueves":
+        echo "Hoy es jueves";
+        break;
+    case "viernes":
+        echo "Hoy es viernes";
+        break;
+    case "sábado":
+        echo "Hoy es sábado";
+        break;
+    case "domingo":
+        echo "Hoy es domingo";
+        break;
+    default:
+        echo "Día inválido";
+        break;
+}
 ?>
