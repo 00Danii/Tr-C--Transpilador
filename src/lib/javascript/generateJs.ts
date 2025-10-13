@@ -203,6 +203,30 @@ export function generateJs(node: Program | Statement | Expression): string {
       // Simplemente genera el cuerpo de statements
       return node.body.map(generateJs).join("");
 
+    case "SwitchStatement": {
+      let code = `switch (${generateJs(node.discriminant)}) {\n`;
+      node.cases.forEach((c) => {
+        if (c.test !== null) {
+          code += `  case ${generateJs(c.test)}:\n`;
+          code += `    ` + c.consequent.map(generateJs).join("    ");
+          code += "    break;\n";
+        } else {
+          // Caso default
+          code += `  default:\n`;
+          code += `    ` + c.consequent.map(generateJs).join("    ");
+          code += "    break;\n";
+        }
+      });
+      // Si tienes node.defaultCase, agrégalo como default también
+      if (node.defaultCase && node.defaultCase.length > 0) {
+        code += `  default:\n`;
+        code += `    ` + node.defaultCase.map(generateJs).join("    ");
+        // code += "    break;\n";
+      }
+      code += "}\n";
+      return code;
+    }
+
     default:
       return "// [NO SOPORTADO]\n";
   }
