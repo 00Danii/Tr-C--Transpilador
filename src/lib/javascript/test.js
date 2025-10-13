@@ -32,7 +32,6 @@ do {
   console.log("do while:", contador);
 } while (contador > 0);
 
-
 // FOR
 for (i = 0; i < 5; i++) {
   console.log("i =", i);
@@ -59,4 +58,33 @@ let mixto = [42, "texto", true, null];
 
 let colores = ["Rojo", "Verde"];
 
-console.log(colores[1])
+console.log(colores[1]);
+
+// Switch
+dia = "lunes";
+switch (dia) {
+  case "lunes":
+    console.log("Hoy es lunes");
+    break;
+  case "martes":
+    console.log("Hoy es martes");
+    break;
+  case "miércoles":
+    console.log("Hoy es miércoles");
+    break;
+  case "jueves":
+    console.log("Hoy es jueves");
+    break;
+  case "viernes":
+    console.log("Hoy es viernes");
+    break;
+  case "sábado":
+    console.log("Hoy es sábado");
+    break;
+  case "domingo":
+    console.log("Hoy es domingo");
+    break;
+  default:
+    console.log("Día inválido");
+    break;
+}
