@@ -20,6 +20,8 @@ import {
   UnaryExpression,
   LambdaExpression,
   DoWhileStatement,
+  SwitchStatement,
+  SwitchCase,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -188,9 +190,81 @@ export function parse(tokens: Token[]): Program {
     // do { } while ();
     if (token.type === "DO") return parseDoWhileStatement();
 
+    if (token.type === "SWITCH") return parseSwitchStatement();
+
     // Por defecto, consume y retorna undefined
     consume();
     return undefined;
+  }
+
+  function parseSwitchStatement(): SwitchStatement {
+    consume("SWITCH");
+    consume("PUNCTUATION"); // (
+    const discriminant = parseExpression();
+    consume("PUNCTUATION"); // )
+    consume("PUNCTUATION"); // {
+    const cases: SwitchCase[] = [];
+    let defaultCase: Statement[] | undefined;
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      if (peek().type === "CASE") {
+        consume("CASE");
+        const test = parseExpression();
+        consume("PUNCTUATION"); // :
+        const consequent: Statement[] = [];
+        while (
+          peek() &&
+          peek().type !== "CASE" &&
+          peek().type !== "DEFAULT" &&
+          !(peek().type === "PUNCTUATION" && peek().value === "}")
+        ) {
+          // Opcional: consume break;
+          if (peek().type === "BREAK") {
+            consume("BREAK");
+            if (
+              peek() &&
+              peek().type === "PUNCTUATION" &&
+              peek().value === ";"
+            ) {
+              consume("PUNCTUATION");
+            }
+            continue;
+          }
+          consequent.push(parseStatement());
+        }
+        cases.push({ test, consequent });
+      } else if (peek().type === "DEFAULT") {
+        consume("DEFAULT");
+        consume("PUNCTUATION"); // :
+        defaultCase = [];
+        while (
+          peek() &&
+          peek().type !== "CASE" &&
+          !(peek().type === "PUNCTUATION" && peek().value === "}")
+        ) {
+          if (peek().type === "BREAK") {
+            consume("BREAK");
+            if (
+              peek() &&
+              peek().type === "PUNCTUATION" &&
+              peek().value === ";"
+            ) {
+              consume("PUNCTUATION");
+            }
+            continue;
+          }
+          defaultCase.push(parseStatement());
+        }
+      } else {
+        consume();
+      }
+    }
+    consume("PUNCTUATION"); // }
+    return {
+      type: "SwitchStatement",
+      discriminant,
+      cases,
+      defaultCase,
+    };
   }
 
   function parseDoWhileStatement(): DoWhileStatement {
