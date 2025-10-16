@@ -193,9 +193,27 @@ export function generatePhp(
     case "BlockStatement":
       return node.body.map(generatePhp).join("");
 
-    case "ArrayExpression":
-      // array(1, 2, 3) en PHP
-      return "array(" + node.elements.map(generatePhp).join(", ") + ")";
+    case "ArrayExpression": {
+      // Helper para generar la clave correcta en PHP
+      function phpKey(key: any) {
+        // Literal: se genera tal cual (generatePhp ya envuelve strings)
+        if (key.type === "Literal") return generatePhp(key);
+        // Identifier: convertir a string "name" (no $)
+        if (key.type === "Identifier") return `"${key.name}"`;
+        // Otros (expresiones): generar su código (ej. 0, expresión)
+        return generatePhp(key);
+      }
+
+      const items = node.elements.map((el: any) => {
+        if ((el as any).type === "ArrayKeyValue") {
+          return `${phpKey((el as any).key)} => ${generatePhp(
+            (el as any).value
+          )}`;
+        }
+        return generatePhp(el as any);
+      });
+      return "array(" + items.join(", ") + ")";
+    }
 
     case "MemberExpression":
       // $arr[0] en PHP

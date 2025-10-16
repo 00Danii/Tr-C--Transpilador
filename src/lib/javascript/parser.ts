@@ -13,6 +13,7 @@ import {
   TryStatement,
   SwitchStatement,
   SwitchCase,
+  ArrayKeyValue,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -465,6 +466,56 @@ export function parse(tokens: Token[]): Program {
 
   function parsePrimary(): Expression {
     const token = peek();
+
+    // Soporte para objetos literales: { a: 1, "b": 2 }
+    if (token.type === "PUNCTUATION" && token.value === "{") {
+      consume("PUNCTUATION"); // {
+      const elements: (Expression | ArrayKeyValue)[] = [];
+      while (
+        peek() &&
+        !(peek().type === "PUNCTUATION" && peek().value === "}")
+      ) {
+        const keyTok = peek();
+        let keyExpr: Expression;
+        // clave como string o numero => Literal
+        if (keyTok.type === "STRING" || keyTok.type === "NUMBER") {
+          consume();
+          keyExpr = { type: "Literal", value: keyTok.value } as any;
+        } else if (keyTok.type === "IDENTIFIER") {
+          // clave sin comillas: Identifier
+          consume();
+          keyExpr = { type: "Identifier", name: String(keyTok.value) } as any;
+        } else {
+          throw new Error(
+            `Clave de propiedad inesperada: ${keyTok.type}, valor: ${keyTok.value}`
+          );
+        }
+
+        // si hay ":", es forma normal key: value
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ":") {
+          consume("PUNCTUATION"); // :
+          const valueExpr = parseExpression();
+          elements.push({
+            type: "ArrayKeyValue",
+            key: keyExpr,
+            value: valueExpr,
+          });
+        } else {
+          // shorthand: { a } -> { a: a }
+          elements.push({
+            type: "ArrayKeyValue",
+            key: keyExpr,
+            value: keyExpr,
+          });
+        }
+
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+        }
+      }
+      consume("PUNCTUATION"); // }
+      return { type: "ArrayExpression", elements } as any;
+    }
 
     // Soporte para arreglos: [1, 2, x]
     if (token.type === "PUNCTUATION" && token.value === "[") {
