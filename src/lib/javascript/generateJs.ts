@@ -16,7 +16,9 @@ import {
   ArrayKeyValue,
 } from "../ast";
 
-export function generateJs(node: Program | Statement | Expression | ArrayKeyValue | undefined): string {
+export function generateJs(
+  node: Program | Statement | Expression | ArrayKeyValue | undefined
+): string {
   switch (node?.type) {
     case "Program":
       return node.body.map(generateJs).join("");
@@ -194,8 +196,35 @@ export function generateJs(node: Program | Statement | Expression | ArrayKeyValu
         `} while (${generateJs(node.test)});\n`
       );
 
-    case "ArrayExpression":
+    case "ArrayExpression": {
+      function jsKey(key: Expression) {
+        if (
+          key.type === "Literal" &&
+          typeof key.value === "string" &&
+          /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key.value)
+        ) {
+          return key.value; // sin comillas
+        }
+        return generateJs(key); // con comillas si es string, número, etc.
+      }
+
+      // Si hay al menos un ArrayKeyValue, transpila como objeto
+      if (node.elements.some((el) => el.type === "ArrayKeyValue")) {
+        return (
+          "{" +
+          node.elements
+            .map((el) =>
+              el.type === "ArrayKeyValue"
+                ? `${jsKey(el.key)}: ${generateJs(el.value)}`
+                : generateJs(el)
+            )
+            .join(", ") +
+          "}"
+        );
+      }
+      // Si no, transpila como arreglo normal
       return `[${node.elements.map(generateJs).join(", ")}]`;
+    }
 
     case "MemberExpression":
       return `${generateJs(node.object)}[${generateJs(node.property)}]`;
