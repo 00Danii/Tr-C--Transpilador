@@ -380,6 +380,60 @@ export function parse(tokens: Token[]): Program {
     while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
     const token = peek();
 
+    // Soporte para objetos literales/diccionarios: { "a": 1, b: 2 }
+    if (token.type === "PUNCTUATION" && token.value === "{") {
+      consume("PUNCTUATION"); // {
+      const elements: (Expression | any)[] = [];
+      while (
+        peek() &&
+        !(peek().type === "PUNCTUATION" && peek().value === "}")
+      ) {
+        // parse key (STRING, NUMBER o IDENTIFIER)
+        const keyTok = peek();
+        let keyExpr: Expression;
+        if (keyTok.type === "STRING" || keyTok.type === "NUMBER") {
+          consume();
+          keyExpr = { type: "Literal", value: keyTok.value } as Expression;
+        } else if (keyTok.type === "IDENTIFIER") {
+          consume();
+          keyExpr = {
+            type: "Identifier",
+            name: String(keyTok.value),
+          } as Expression;
+        } else {
+          throw new Error(
+            `Clave de diccionario inesperada: ${keyTok.type}, valor: ${keyTok.value}`
+          );
+        }
+
+        // si sigue ":" -> key: value
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ":") {
+          consume("PUNCTUATION"); // :
+          const valueExpr = parseExpression();
+          elements.push({
+            type: "ArrayKeyValue",
+            key: keyExpr,
+            value: valueExpr,
+          });
+        } else {
+          // shorthand { a } -> { a: a }
+          elements.push({
+            type: "ArrayKeyValue",
+            key: keyExpr,
+            value: keyExpr,
+          });
+        }
+
+        // separador opcional
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+          consume("PUNCTUATION");
+          // permitir coma final: si siguiente es '}' se terminará en la condición del while
+        }
+      }
+      consume("PUNCTUATION"); // }
+      return { type: "ArrayExpression", elements } as any;
+    }
+
     // Soporte para arreglos: [1, 2, x]
     if (token.type === "PUNCTUATION" && token.value === "[") {
       consume("PUNCTUATION"); // [
