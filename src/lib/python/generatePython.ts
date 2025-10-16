@@ -237,7 +237,7 @@ export function generatePython(
           node.elements
             .map((el) =>
               el.type === "ArrayKeyValue"
-                ? `${generatePython(el.key)}: ${generatePython(el.value)}`
+                ? `"${generatePython(el.key)}": ${generatePython(el.value)}`
                 : generatePython(el)
             )
             .join(", ") +
