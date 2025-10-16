@@ -61,3 +61,13 @@ print(arr[4])
 
 frutas = ["Manzana", "Naranja", "Mango"]
 print(frutas[1])
+
+# DICCIONARIOS
+persona = {"nombre": "Danii", "edad": 22, "ciudad": "México"}
+print(persona["nombre"])
+
+# DICCIONARIO ANIDADO
+config = {"db": {"host": "localhost", "port": 3306}, "debug": True}
+
+# LISTA CON DICCIONARIO
+lista = [{"id": 1, "tag": "x"}, {"id": 2, "tag": "y"}]
