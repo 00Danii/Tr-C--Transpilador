@@ -1,6 +1,8 @@
-import { Program, Statement, Expression } from "../ast";
+import { Program, Statement, Expression, ArrayKeyValue } from "../ast";
 
-export function generatePython(node: Program | Statement | Expression): string {
+export function generatePython(
+  node: Program | Statement | Expression | ArrayKeyValue | undefined
+): string {
   switch (node?.type) {
     case "Program":
       return node.body.map(generatePython).join("\n");
@@ -227,8 +229,24 @@ export function generatePython(node: Program | Statement | Expression): string {
       return code;
     }
 
-    case "ArrayExpression":
-      return `[${node.elements.map(generatePython).join(", ")}]`;
+    case "ArrayExpression": {
+      // Si hay al menos un ArrayKeyValue, transpila como dict
+      if (node.elements.some((el) => el.type === "ArrayKeyValue")) {
+        return (
+          "{" +
+          node.elements
+            .map((el) =>
+              el.type === "ArrayKeyValue"
+                ? `${generatePython(el.key)}: ${generatePython(el.value)}`
+                : generatePython(el)
+            )
+            .join(", ") +
+          "}"
+        );
+      }
+      // Si no, transpila como lista
+      return "[" + node.elements.map(generatePython).join(", ") + "]";
+    }
 
     case "MemberExpression":
       return `${generatePython(node.object)}[${generatePython(node.property)}]`;
