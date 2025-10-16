@@ -47,7 +47,8 @@ export type Expression =
   | LambdaExpression
   | ArrayExpression
   | MemberExpression
-  | CommentStatement;
+  | CommentStatement
+  | ArrayKeyValue;
 
 export type BinaryExpression = {
   type: "BinaryExpression";
@@ -146,7 +147,13 @@ export type BlockStatement = {
 
 export type ArrayExpression = {
   type: "ArrayExpression";
-  elements: Expression[];
+  elements: (Expression | ArrayKeyValue)[];
+};
+
+export type ArrayKeyValue = {
+  type: "ArrayKeyValue";
+  key: Expression;
+  value: Expression;
 };
 
 export type MemberExpression = {

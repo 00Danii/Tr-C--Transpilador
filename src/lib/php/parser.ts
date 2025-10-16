@@ -22,6 +22,7 @@ import {
   DoWhileStatement,
   SwitchStatement,
   SwitchCase,
+  ArrayKeyValue,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -512,16 +513,20 @@ export function parse(tokens: Token[]): Program {
     return { type: "TryStatement", block, handler, finalizer };
   }
 
-  function parseExpression(): Expression {
-    return parseBinaryExpression();
+  function parseExpression(inArray = false): Expression {
+    return parseBinaryExpression(inArray);
   }
 
-  function parseBinaryExpression(): Expression {
+  function parseBinaryExpression(inArray = false): Expression {
     let left = parsePrimary();
     while (peek() && peek().type === "OPERATOR") {
       const operator = consume("OPERATOR").value as string;
       const right = parsePrimary();
-      left = { type: "BinaryExpression", operator, left, right };
+      if (operator === "=>" && inArray) {
+        left = { type: "ArrayKeyValue", key: left, value: right };
+      } else {
+        left = { type: "BinaryExpression", operator, left, right };
+      }
     }
     return left;
   }
@@ -546,24 +551,25 @@ export function parse(tokens: Token[]): Program {
         }
       }
       consume("PUNCTUATION"); // )
-      return { type: "ArrayExpression", elements };
+      return { type: "ArrayExpression", elements } as any;
     }
 
     // Soporte para arreglos literales: [1, 2, 3]
     if (token.type === "PUNCTUATION" && token.value === "[") {
       consume("PUNCTUATION"); // [
-      const elements: Expression[] = [];
+      const elements: (Expression | ArrayKeyValue)[] = [];
       while (
         peek() &&
         !(peek().type === "PUNCTUATION" && peek().value === "]")
       ) {
-        elements.push(parseExpression());
+        const keyOrValue = parseExpression(true);
+        elements.push(keyOrValue);
         if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
           consume("PUNCTUATION");
         }
       }
       consume("PUNCTUATION"); // ]
-      return { type: "ArrayExpression", elements };
+      return { type: "ArrayExpression", elements } as any;
     }
 
     if (token.type === "NUMBER" || token.type === "STRING") {
