@@ -13,9 +13,10 @@ import {
   CallExpression,
   Identifier,
   Literal,
+  ArrayKeyValue,
 } from "../ast";
 
-export function generateJs(node: Program | Statement | Expression): string {
+export function generateJs(node: Program | Statement | Expression | ArrayKeyValue | undefined): string {
   switch (node?.type) {
     case "Program":
       return node.body.map(generateJs).join("");

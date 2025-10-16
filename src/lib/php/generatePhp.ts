@@ -1,7 +1,7 @@
-import { Program, Statement, Expression } from "../ast";
+import { Program, Statement, Expression, ArrayKeyValue } from "../ast";
 
 export function generatePhp(
-  node: Program | Statement | Expression | undefined
+  node: Program | Statement | Expression | ArrayKeyValue | undefined
 ): string {
   if (!node) return "";
   switch (node.type) {
