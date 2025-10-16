@@ -69,6 +69,22 @@ echo $arr[2];
 $frutas = array("Manzana", "Naranja", "Mango");
 echo $frutas[1];
 
+// ARREGLOS ASOCIATIVOS
+$persona = [
+    "nombre" => "Daniel",
+    "edad" => 22,
+    "ciudad" => "México"
+];
+echo $persona["nombre"];
+echo $persona["edad"];
+
+$mixto = [
+    0 => "cero",
+    "uno" => 1,
+    2 => "dos"
+];
+echo $mixto[0];
+echo $mixto["uno"];
 
 // SWITCH CASE
 $dia = "lunes";
