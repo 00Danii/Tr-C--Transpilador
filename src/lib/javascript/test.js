@@ -60,6 +60,18 @@ let colores = ["Rojo", "Verde"];
 
 console.log(colores[1]);
 
+// Objetos Lietarales
+const persona = { nombre: "Nombre1", edad: 22, ciudad: "México" };
+console.log(persona["edad"]);
+
+
+// Objeto con Arrays 
+const data = {
+  usuario: { nombre: "Nombre2", roles: ["admin", "editor"] },
+  activo: true
+};
+
+
 // Switch
 dia = "lunes";
 switch (dia) {
