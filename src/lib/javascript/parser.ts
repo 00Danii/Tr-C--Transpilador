@@ -14,6 +14,10 @@ import {
   SwitchStatement,
   SwitchCase,
   ArrayKeyValue,
+  MethodDefinition,
+  PropertyDefinition,
+  ClassDeclaration,
+  Identifier,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -124,7 +128,96 @@ export function parse(tokens: Token[]): Program {
     // Soporte para switch-case
     if (token.type === "SWITCH") return parseSwitchStatement();
 
+    // Soporte para CLASES
+    if (token.type === "CLASS") return parseClassDeclaration();
+
     return parseExpressionStatement();
+  }
+
+  function parseClassDeclaration(): ClassDeclaration {
+    consume("CLASS");
+    const name = String(consume("IDENTIFIER").value);
+    let superClass: Identifier | undefined;
+
+    if (peek() && peek().type === "EXTENDS") {
+      consume("EXTENDS");
+      superClass = {
+        type: "Identifier",
+        name: String(consume("IDENTIFIER").value),
+      };
+    }
+
+    consume("PUNCTUATION"); // {
+    const body: (MethodDefinition | PropertyDefinition)[] = [];
+
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      if (peek().type === "CONSTRUCTOR") {
+        consume("CONSTRUCTOR");
+        consume("PUNCTUATION"); // (
+        const params: string[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          params.push(String(consume("IDENTIFIER").value));
+          if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+            consume("PUNCTUATION");
+          }
+        }
+        consume("PUNCTUATION"); // )
+        consume("PUNCTUATION"); // {
+        const methodBody: Statement[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === "}")
+        ) {
+          methodBody.push(parseStatement());
+        }
+        consume("PUNCTUATION"); // }
+
+        body.push({
+          type: "MethodDefinition",
+          key: { type: "Identifier", name: "constructor" },
+          value: { type: "FunctionExpression", params, body: methodBody },
+          kind: "constructor",
+          static: false,
+        });
+      } else if (peek().type === "IDENTIFIER") {
+        const methodName = String(consume("IDENTIFIER").value);
+        consume("PUNCTUATION"); // (
+        const params: string[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          params.push(String(consume("IDENTIFIER").value));
+          if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+            consume("PUNCTUATION");
+          }
+        }
+        consume("PUNCTUATION"); // )
+        consume("PUNCTUATION"); // {
+        const methodBody: Statement[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === "}")
+        ) {
+          methodBody.push(parseStatement());
+        }
+        consume("PUNCTUATION"); // }
+
+        body.push({
+          type: "MethodDefinition",
+          key: { type: "Identifier", name: methodName },
+          value: { type: "FunctionExpression", params, body: methodBody },
+          kind: "method",
+          static: false,
+        });
+      }
+    }
+
+    consume("PUNCTUATION"); // }
+    return { type: "ClassDeclaration", name, superClass, body };
   }
 
   function parseSwitchStatement(): SwitchStatement {
@@ -466,6 +559,45 @@ export function parse(tokens: Token[]): Program {
 
   function parsePrimary(): Expression {
     const token = peek();
+
+    // Soporte para identificadores y acceso a propiedades: obj.prop
+    if (token.type === "IDENTIFIER") {
+      const name = String(consume("IDENTIFIER").value);
+
+      // Verificar si es acceso a propiedad: obj.prop
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ".") {
+        consume("PUNCTUATION"); // .
+        const property = String(consume("IDENTIFIER").value);
+
+        return {
+          type: "MemberExpression",
+          object: { type: "Identifier", name },
+          property: { type: "Identifier", name: property },
+          computed: false,
+        } as any;
+      }
+
+      return { type: "Identifier", name };
+    }
+
+    // SOPORTE PARA THIS
+    if (token.type === "THIS") {
+      consume("THIS");
+
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ".") {
+        consume("PUNCTUATION"); // .
+        const property = String(consume("IDENTIFIER").value);
+
+        return {
+          type: "MemberExpression",
+          object: { type: "Identifier", name: "this" },
+          property: { type: "Identifier", name: property },
+          computed: false,
+        } as any;
+      }
+
+      return { type: "Identifier", name: "this" };
+    }
 
     // Soporte para objetos literales: { a: 1, "b": 2 }
     if (token.type === "PUNCTUATION" && token.value === "{") {

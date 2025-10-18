@@ -18,6 +18,7 @@ export type Statement =
   | TryStatement
   | BlockStatement
   | MainMethod
+  | ClassDeclaration
   | undefined;
 
 export type FunctionDeclaration = {
@@ -160,6 +161,7 @@ export type MemberExpression = {
   type: "MemberExpression";
   object: Expression;
   property: Expression;
+  computed?: boolean;
 };
 
 export type SwitchStatement = {
@@ -194,3 +196,33 @@ export interface MainMethod {
   type: "MainMethod";
   body: Statement[];
 }
+
+export type ClassDeclaration = {
+  type: "ClassDeclaration";
+  name: string;
+  superClass?: Identifier;
+  body: (MethodDefinition | PropertyDefinition)[];
+};
+
+export type MethodDefinition = {
+  type: "MethodDefinition";
+  key: Identifier;
+  value: FunctionExpression;
+  kind: "constructor" | "method" | "get" | "set";
+  static: boolean;
+  visibility?: "public" | "private" | "protected";
+};
+
+export type PropertyDefinition = {
+  type: "PropertyDefinition";
+  key: Identifier;
+  value?: Expression;
+  static: boolean;
+  visibility?: "public" | "private" | "protected";
+};
+
+export type FunctionExpression = {
+  type: "FunctionExpression";
+  params: string[];
+  body: Statement[];
+};
