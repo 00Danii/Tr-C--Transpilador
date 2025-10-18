@@ -64,13 +64,11 @@ console.log(colores[1]);
 const persona = { nombre: "Nombre1", edad: 22, ciudad: "México" };
 console.log(persona["edad"]);
 
-
-// Objeto con Arrays 
+// Objeto con Arrays
 const data = {
   usuario: { nombre: "Nombre2", roles: ["admin", "editor"] },
-  activo: true
+  activo: true,
 };
-
 
 // Switch
 dia = "lunes";
@@ -99,4 +97,16 @@ switch (dia) {
   default:
     console.log("Día inválido");
     break;
+}
+
+// CLASES
+class Persona {
+  constructor(nombre, edad) {
+    this.nombre = nombre;
+    this.edad = edad;
+  }
+
+  saludar() {
+    return "Hola soy " + this.nombre;
+  }
 }
