@@ -215,9 +215,24 @@ export function generatePhp(
       return "array(" + items.join(", ") + ")";
     }
 
-    case "MemberExpression":
-      // $arr[0] en PHP
-      return `${generatePhp(node.object)}[${generatePhp(node.property)}]`;
+    case "MemberExpression": {
+      const objectCode = generatePhp(node.object);
+
+      // Si el objeto es 'this', convertir a '$this'
+      const finalObject = objectCode === "$this" ? "$this" : objectCode;
+
+      // Si no es computed (obj.prop), usar notación de flecha ->
+      if (!node.computed) {
+        const propertyName =
+          node.property.type === "Identifier"
+            ? node.property.name
+            : generatePhp(node.property);
+        return `${finalObject}->${propertyName}`;
+      }
+
+      // Si es computed (obj[prop]), usar notación de corchetes
+      return `${finalObject}[${generatePhp(node.property)}]`;
+    }
 
     case "MainMethod":
       // Simplemente genera el cuerpo de statements
@@ -243,6 +258,31 @@ export function generatePhp(
         code += `      ` + node.defaultCase.map(generatePhp).join("      ");
         code += "      break;\n";
       }
+      code += "}\n";
+      return code;
+    }
+
+    case "ClassDeclaration": {
+      let code = `class ${node.name}`;
+      if (node.superClass) {
+        code += ` extends ${node.superClass.name}`;
+      }
+      code += " {\n";
+
+      node.body.forEach((member) => {
+        if (member.type === "MethodDefinition") {
+          const visibility = member.visibility || "public";
+          const methodName =
+            member.key.name === "constructor" ? "__construct" : member.key.name;
+          const params = member.value.params.map((p) => `$${p}`).join(", ");
+          code += `  ${visibility} function ${methodName}(${params}) {\n`;
+          member.value.body.forEach((stmt) => {
+            code += "    " + generatePhp(stmt) + "\n";
+          });
+          code += "  }\n";
+        }
+      });
+
       code += "}\n";
       return code;
     }
