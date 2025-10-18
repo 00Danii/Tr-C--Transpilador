@@ -248,8 +248,20 @@ export function generatePython(
       return "[" + node.elements.map(generatePython).join(", ") + "]";
     }
 
-    case "MemberExpression":
-      return `${generatePython(node.object)}[${generatePython(node.property)}]`;
+    case "MemberExpression": {
+      const objectCode = generatePython(node.object);
+
+      // Si el objeto es 'this', convertir a 'self'
+      const finalObject = objectCode === "this" ? "self" : objectCode;
+
+      // Si no es computed (obj.prop), usar notación de punto
+      if (!node.computed) {
+        return `${finalObject}.${generatePython(node.property)}`;
+      }
+
+      // Si es computed (obj[prop]), usar notación de corchetes
+      return `${finalObject}[${generatePython(node.property)}]`;
+    }
 
     case "MainMethod":
       // Simplemente genera el cuerpo de statements
@@ -309,6 +321,34 @@ export function generatePython(
         return `${node.name} = []  # [NO SOPORTADO: arreglos de más de 2 dimensiones]`;
       }
     }
+
+    case "ClassDeclaration": {
+      let code = `class ${node.name}`;
+      if (node.superClass) {
+        code += `(${node.superClass.name})`;
+      }
+      code += ":\n";
+
+      node.body.forEach((member) => {
+        if (member.type === "MethodDefinition") {
+          const methodName =
+            member.key.name === "constructor" ? "__init__" : member.key.name;
+          const params = member.value.params.join(", ");
+          code += `    def ${methodName}(self${
+            params ? ", " + params : ""
+          }):\n`;
+          member.value.body.forEach((stmt) => {
+            code += "        " + generatePython(stmt) + "\n";
+          });
+        }
+      });
+
+      return code;
+    }
+
+    // case "MethodDefinition":
+    //   // Manejado en ClassDeclaration
+    //   return "";
 
     default:
       return "# [NO SOPORTADO]";
