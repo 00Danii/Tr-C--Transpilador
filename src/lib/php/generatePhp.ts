@@ -26,9 +26,12 @@ export function generatePhp(
       return `$${node.name} = ${generatePhp(node.value)};\n`;
 
     case "BinaryExpression":
-      return `${generatePhp(node.left)} ${node.operator} ${generatePhp(
-        node.right
-      )}`;
+      // convertir + a . para concatenación
+      let operator = node.operator;
+      if (operator === "+") {
+        operator = ".";
+      }
+      return `${generatePhp(node.left)} ${operator} ${generatePhp(node.right)}`;
 
     case "Identifier":
       return `$${node.name}`;
