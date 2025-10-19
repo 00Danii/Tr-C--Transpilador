@@ -158,10 +158,14 @@ export function generateJs(
         ? `"${node.value}"`
         : String(node.value);
 
-    case "BinaryExpression":
-      return `${generateJs(node.left)} ${node.operator} ${generateJs(
-        node.right
-      )}`;
+    case "BinaryExpression": {
+      let operator = node.operator;
+      // Convertir concatenación de PHP (.) a concatenación de JS (+)
+      if (operator === ".") {
+        operator = "+";
+      }
+      return `${generateJs(node.left)} ${operator} ${generateJs(node.right)}`;
+    }
 
     case "UnaryExpression":
       if (node.operator === "not") {
@@ -226,8 +230,21 @@ export function generateJs(
       return `[${node.elements.map(generateJs).join(", ")}]`;
     }
 
-    case "MemberExpression":
-      return `${generateJs(node.object)}[${generateJs(node.property)}]`;
+    case "MemberExpression": {
+      const objectCode = generateJs(node.object);
+
+      // Si no es computed (obj.prop), usar notación de punto
+      if (!node.computed) {
+        const propertyName =
+          node.property.type === "Identifier"
+            ? node.property.name
+            : generateJs(node.property);
+        return `${objectCode}.${propertyName}`;
+      }
+
+      // Si es computed (obj[prop]), usar notación de corchetes
+      return `${objectCode}[${generateJs(node.property)}]`;
+    }
 
     case "MainMethod":
       // Simplemente genera el cuerpo de statements
@@ -253,6 +270,30 @@ export function generateJs(
         code += `    ` + node.defaultCase.map(generateJs).join("    ");
         // code += "    break;\n";
       }
+      code += "}\n";
+      return code;
+    }
+
+    case "ClassDeclaration": {
+      let code = `class ${node.name}`;
+      if (node.superClass) {
+        code += ` extends ${node.superClass.name}`;
+      }
+      code += " {\n";
+
+      node.body.forEach((member) => {
+        if (member.type === "MethodDefinition") {
+          const methodName =
+            member.kind === "constructor" ? "constructor" : member.key.name;
+          const params = member.value.params.join(", ");
+          code += `  ${methodName}(${params}) {\n`;
+          member.value.body.forEach((stmt) => {
+            code += "    " + generateJs(stmt) + "\n";
+          });
+          code += "  }\n";
+        }
+      });
+
       code += "}\n";
       return code;
     }
