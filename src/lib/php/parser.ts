@@ -23,6 +23,9 @@ import {
   SwitchStatement,
   SwitchCase,
   ArrayKeyValue,
+  ClassDeclaration,
+  MethodDefinition,
+  PropertyDefinition,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -193,9 +196,96 @@ export function parse(tokens: Token[]): Program {
 
     if (token.type === "SWITCH") return parseSwitchStatement();
 
+    // Clases
+    if (token.type === "CLASS") return parseClassDeclaration();
+
     // Por defecto, consume y retorna undefined
     consume();
     return undefined;
+  }
+
+  function parseClassDeclaration(): ClassDeclaration {
+    consume("CLASS");
+    const name = String(consume("IDENTIFIER").value);
+    let superClass: Identifier | undefined;
+
+    if (peek() && peek().type === "EXTENDS") {
+      consume("EXTENDS");
+      superClass = {
+        type: "Identifier",
+        name: String(consume("IDENTIFIER").value),
+      };
+    }
+
+    consume("PUNCTUATION"); // {
+    const body: (MethodDefinition | PropertyDefinition)[] = [];
+
+    while (peek() && !(peek().type === "PUNCTUATION" && peek().value === "}")) {
+      let visibility: "public" | "private" | "protected" = "public";
+      let isStatic = false;
+
+      // Parse visibility
+      if (
+        peek() &&
+        (peek().type === "PUBLIC" ||
+          peek().type === "PRIVATE" ||
+          peek().type === "PROTECTED")
+      ) {
+        visibility = consume().value as "public" | "private" | "protected";
+      }
+
+      // Parse static
+      if (peek() && peek().type === "STATIC") {
+        consume("STATIC");
+        isStatic = true;
+      }
+
+      // Parse function
+      if (peek() && peek().type === "FUNCTION") {
+        consume("FUNCTION");
+
+        let methodName = String(consume("IDENTIFIER").value);
+        // Si es __construct, cambiar el nombre para el AST
+        const kind = methodName === "__construct" ? "constructor" : "method";
+
+        consume("PUNCTUATION"); // (
+        const params: string[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          if (peek().type === "VARIABLE") {
+            params.push(String(consume("VARIABLE").value).slice(1)); // Quitar $
+          }
+          if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+            consume("PUNCTUATION");
+          }
+        }
+        consume("PUNCTUATION"); // )
+
+        consume("PUNCTUATION"); // {
+        const methodBody: Statement[] = [];
+        while (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === "}")
+        ) {
+          methodBody.push(parseStatement());
+        }
+        consume("PUNCTUATION"); // }
+
+        body.push({
+          type: "MethodDefinition",
+          key: { type: "Identifier", name: methodName },
+          value: { type: "FunctionExpression", params, body: methodBody },
+          kind,
+          static: isStatic,
+          visibility,
+        });
+      }
+    }
+
+    consume("PUNCTUATION"); // }
+    return { type: "ClassDeclaration", name, superClass, body };
   }
 
   function parseSwitchStatement(): SwitchStatement {
@@ -590,13 +680,27 @@ export function parse(tokens: Token[]): Program {
       return { type: "Literal", value: null };
     }
 
-    // Soporte para variables y acceso a elementos: $arr[0]
+    // Soporte para variables 
+    // acceso a elementos: $arr[0]
+    // acceso a propiedades: $this->prop
     if (token.type === "VARIABLE") {
       consume();
       let expr: Expression = {
         type: "Identifier",
         name: String(token.value).slice(1),
       };
+
+      // Acceso a propiedades: $this->prop
+      while (peek() && peek().type === "ARROW") {
+        consume("ARROW"); // ->
+        const property = String(consume("IDENTIFIER").value);
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property: { type: "Identifier", name: property },
+          computed: false,
+        };
+      }
 
       // Acceso a elementos: $arr[0]
       while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
@@ -607,6 +711,7 @@ export function parse(tokens: Token[]): Program {
           type: "MemberExpression",
           object: expr,
           property,
+          computed: true,
         };
       }
 
