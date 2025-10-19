@@ -288,7 +288,7 @@ export function generateJs(
           const params = member.value.params.join(", ");
           code += `  ${methodName}(${params}) {\n`;
           member.value.body.forEach((stmt) => {
-            code += "    " + generateJs(stmt) + "\n";
+            code += "    " + generateJs(stmt);
           });
           code += "  }\n";
         }
