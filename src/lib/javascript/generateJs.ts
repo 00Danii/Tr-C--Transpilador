@@ -151,6 +151,10 @@ export function generateJs(
         .join(", ")})`;
 
     case "Identifier":
+      // Convertir 'self' a 'this' en JavaScript
+      if (node.name === "self") {
+        return "this";
+      }
       return node.name;
 
     case "Literal":
@@ -160,10 +164,29 @@ export function generateJs(
 
     case "BinaryExpression": {
       let operator = node.operator;
+
+      // Manejar asignación
+      if (operator === "=") {
+        return `${generateJs(node.left)} = ${generateJs(node.right)}`;
+      }
+
       // Convertir concatenación de PHP (.) a concatenación de JS (+)
-      if (operator === ".") {
+      // Solo convertir . a + si parece concatenación de strings (ambos lados son literales string)
+      if (
+        operator === "." &&
+        node.left.type === "Literal" &&
+        typeof node.left.value === "string" &&
+        node.right.type === "Literal" &&
+        typeof node.right.value === "string"
+      ) {
         operator = "+";
       }
+
+      // Para acceso a propiedades, no poner espacios
+      if (operator === ".") {
+        return `${generateJs(node.left)}${operator}${generateJs(node.right)}`;
+      }
+
       return `${generateJs(node.left)} ${operator} ${generateJs(node.right)}`;
     }
 
@@ -285,7 +308,12 @@ export function generateJs(
         if (member.type === "MethodDefinition") {
           const methodName =
             member.kind === "constructor" ? "constructor" : member.key.name;
-          const params = member.value.params.join(", ");
+
+          // FILTRAR 'self' de los parámetros para JavaScript
+          const params = member.value.params
+            .filter((param) => param !== "self")
+            .join(", ");
+
           code += `  ${methodName}(${params}) {\n`;
           member.value.body.forEach((stmt) => {
             code += "    " + generateJs(stmt);
