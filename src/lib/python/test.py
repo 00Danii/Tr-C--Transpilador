@@ -71,3 +71,13 @@ config = {"db": {"host": "localhost", "port": 3306}, "debug": True}
 
 # LISTA CON DICCIONARIO
 lista = [{"id": 1, "tag": "x"}, {"id": 2, "tag": "y"}]
+
+
+# CLASES
+class Persona:
+    def __init__(self, nombre, edad):
+        self.nombre = nombre
+        self.edad = edad
+    
+    def saludar(self):
+        return "Hola, soy " + self.nombre
