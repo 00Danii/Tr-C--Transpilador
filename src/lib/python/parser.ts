@@ -11,6 +11,9 @@ import {
   ForStatement,
   Identifier,
   TryStatement,
+  ClassDeclaration,
+  MethodDefinition,
+  PropertyDefinition,
 } from "../ast";
 
 export function parse(tokens: Token[]): Program {
@@ -82,8 +85,76 @@ export function parse(tokens: Token[]): Program {
     // Si es un bloque try
     if (token.type === "TRY") return parseTryStatement();
 
+    // Si es una clase
+    if (token.type === "CLASS") return parseClassDeclaration();
+
     // Si es expresión simple
     return parseExpressionStatement();
+  }
+
+  function parseClassDeclaration(): ClassDeclaration {
+    consume("CLASS");
+    const name = String(consume("IDENTIFIER").value);
+    let superClass: Identifier | undefined;
+
+    // Herencia: class Persona(Animal):
+    if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
+      consume("PUNCTUATION"); // (
+      superClass = {
+        type: "Identifier",
+        name: String(consume("IDENTIFIER").value),
+      };
+      consume("PUNCTUATION"); // )
+    }
+
+    consume("PUNCTUATION"); // :
+
+    // Consumir newlines e indents
+    while (peek() && (peek().type === "NEWLINE" || peek().type === "INDENT")) {
+      consume();
+    }
+
+    const body: (MethodDefinition | PropertyDefinition)[] = [];
+
+    // Parsear métodos dentro de la clase
+    while (peek() && peek().type !== "DEDENT" && peek().type) {
+      while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+
+      if (!peek()) break;
+
+      if (peek().type === "DEF") {
+        // DELEGAR a parseMethodDeclaration en vez de manejar internamente
+        const func = parseMethodDeclaration();
+
+        // Convertir FunctionDeclaration a MethodDefinition
+        const kind = func.name === "__init__" ? "constructor" : "method";
+
+        body.push({
+          type: "MethodDefinition",
+          key: { type: "Identifier", name: func.name },
+          value: {
+            type: "FunctionExpression",
+            params: func.params,
+            body: func.body,
+          },
+          kind,
+          static: false,
+        });
+      } else if (peek() && peek().type === "PASS") {
+        consume("PASS");
+        if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      } else if (peek() && peek().type === "DEDENT") {
+        break;
+      } else {
+        // Saltar tokens que no entendemos
+        consume();
+      }
+    }
+
+    // Consumir DEDENT final si existe
+    if (peek() && peek().type === "DEDENT") consume("DEDENT");
+
+    return { type: "ClassDeclaration", name, superClass, body };
   }
 
   function parseTryStatement(): TryStatement {
@@ -168,12 +239,23 @@ export function parse(tokens: Token[]): Program {
     const name = String(consume("IDENTIFIER").value);
     consume("PUNCTUATION"); // (
     const params: string[] = [];
+
     while (peek() && (peek().type !== "PUNCTUATION" || peek().value !== ")")) {
-      params.push(String(consume("IDENTIFIER").value));
+      // CAMBIO: Aceptar tanto IDENTIFIER como SELF
+      const paramToken = peek();
+      if (paramToken.type === "IDENTIFIER" || paramToken.type === "SELF") {
+        params.push(String(consume().value));
+      } else {
+        throw new Error(
+          `Token inesperado en parámetros: ${paramToken.type}, valor: ${paramToken.value}`
+        );
+      }
+
       if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
         consume("PUNCTUATION");
       }
     }
+
     consume("PUNCTUATION"); // )
     consume("PUNCTUATION"); // :
     if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
@@ -186,6 +268,48 @@ export function parse(tokens: Token[]): Program {
       }
     }
     consume("DEDENT"); // <-- Aquí termina el bloque
+    return { type: "FunctionDeclaration", name, params, body };
+  }
+
+  function parseMethodDeclaration(): FunctionDeclaration {
+    consume("DEF");
+    const name = String(consume("IDENTIFIER").value);
+    consume("PUNCTUATION"); // (
+    const params: string[] = [];
+
+    while (peek() && (peek().type !== "PUNCTUATION" || peek().value !== ")")) {
+      const paramToken = peek();
+      if (paramToken.type === "IDENTIFIER" || paramToken.type === "SELF") {
+        params.push(String(consume().value));
+      } else {
+        throw new Error(
+          `Token inesperado en parámetros: ${paramToken.type}, valor: ${paramToken.value}`
+        );
+      }
+
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
+        consume("PUNCTUATION");
+      }
+    }
+
+    consume("PUNCTUATION"); // )
+    consume("PUNCTUATION"); // :
+
+    // SÍ consumir NEWLINE e INDENT aquí - cada método tiene su propia indentación
+    if (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+    if (peek() && peek().type === "INDENT") consume("INDENT"); // <-- AGREGAR ESTA LÍNEA
+
+    const body: Statement[] = [];
+    while (peek() && peek().type !== "DEDENT" && peek().type !== "DEF") {
+      while (peek() && peek().type === "NEWLINE") consume("NEWLINE");
+      if (peek() && peek().type !== "DEDENT" && peek().type !== "DEF") {
+        body.push(parseStatement());
+      }
+    }
+
+    // SÍ consumir DEDENT aquí - termina la indentación del método
+    if (peek() && peek().type === "DEDENT") consume("DEDENT"); // <-- AGREGAR ESTA LÍNEA
+
     return { type: "FunctionDeclaration", name, params, body };
   }
 
@@ -473,15 +597,30 @@ export function parse(tokens: Token[]): Program {
       consume();
       return { type: "Literal", value: false };
     }
-    if (token.type === "IDENTIFIER") {
+
+    // AGREGAR: Soporte para el token SELF
+    if (token.type === "SELF") {
       const id = {
         type: "Identifier",
-        name: String(token.value),
+        name: "self", // Convertir SELF a Identifier con name "self"
       } as Identifier;
-      consume();
+      consume(); // Consumir el token SELF
 
-      // Soporte para acceso a arreglo: arr[0]
       let expr: Expression = id;
+
+      // Soporte para acceso a atributos: self.nombre
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === ".") {
+        consume("PUNCTUATION"); // .
+        const property = String(consume("IDENTIFIER").value);
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property: { type: "Identifier", name: property },
+          computed: false,
+        };
+      }
+
+      // Resto del código para acceso a arrays y llamadas...
       while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
         consume("PUNCTUATION"); // [
         const property = parseExpression();
@@ -490,6 +629,68 @@ export function parse(tokens: Token[]): Program {
           type: "MemberExpression",
           object: expr,
           property,
+          computed: true,
+        };
+      }
+
+      if (peek() && peek().type === "PUNCTUATION" && peek().value === "(") {
+        consume("PUNCTUATION"); // (
+        const args: Expression[] = [];
+        if (
+          peek() &&
+          !(peek().type === "PUNCTUATION" && peek().value === ")")
+        ) {
+          args.push(parseExpression());
+          while (
+            peek() &&
+            peek().type === "PUNCTUATION" &&
+            peek().value === ","
+          ) {
+            consume("PUNCTUATION");
+            args.push(parseExpression());
+          }
+        }
+        consume("PUNCTUATION"); // )
+        return {
+          type: "CallExpression",
+          callee: expr,
+          arguments: args,
+        };
+      }
+      return expr;
+    }
+
+    if (token.type === "IDENTIFIER") {
+      const id = {
+        type: "Identifier",
+        name: String(token.value),
+      } as Identifier;
+      consume();
+
+      let expr: Expression = id;
+
+      // Soporte para acceso a atributos: self.nombre o obj.metodo
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === ".") {
+        consume("PUNCTUATION"); // .
+        const property = String(consume("IDENTIFIER").value);
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property: { type: "Identifier", name: property },
+          computed: false, // obj.prop es acceso directo
+        };
+      }
+
+      // Soporte para acceso a arreglo: arr[0]
+      while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
+        consume("PUNCTUATION"); // [
+        const property = parseExpression();
+        consume("PUNCTUATION"); // ]
+        expr = {
+          type: "MemberExpression",
+          object: expr,
+          property,
+          computed: true, // arr[0] es acceso computed
         };
       }
 
@@ -514,12 +715,13 @@ export function parse(tokens: Token[]): Program {
         consume("PUNCTUATION"); // )
         return {
           type: "CallExpression",
-          callee: id,
+          callee: expr,
           arguments: args,
         };
       }
       return expr;
     }
+
     if (token.type === "OPERATOR" && token.value === "not") {
       consume();
       const argument = parsePrimary();
