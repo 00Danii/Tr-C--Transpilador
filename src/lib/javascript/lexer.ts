@@ -14,7 +14,7 @@ export function tokenize(input: string): Token[] {
     [/^\bwhile\b/, "WHILE"],
     [/^\bfor\b/, "FOR"],
     [/^\breturn\b/, "RETURN"],
-    [/^\b\d+\b/, "NUMBER"],
+    [/^\b\d+(\.\d+)?\b/, "NUMBER"],
     [/^"[^"]*"/, "STRING"],
     [/^try\b/, "TRY"],
     [/^catch\b/, "CATCH"],
