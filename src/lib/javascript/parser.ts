@@ -687,7 +687,11 @@ export function parse(tokens: Token[]): Program {
       return { type: "Literal", value: false };
     }
 
-    if (token.type === "NUMBER" || token.type === "STRING") {
+    if (
+      token.type === "NUMBER" ||
+      token.type === "STRING" ||
+      token.type === "CHAR"
+    ) {
       consume();
       return { type: "Literal", value: token.value };
     }

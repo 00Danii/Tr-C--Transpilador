@@ -33,6 +33,7 @@ export function tokenize(input: string): Token[] {
     [/^\bprivate\b/, "PRIVATE"],
     [/^\bprotected\b/, "PROTECTED"],
     [/^\bthis\b/, "THIS"],
+    [/^'[^']'/, "CHAR"],
     [/^[a-zA-Z_]\w*/, "IDENTIFIER"],
     [/^\+\+/, "INCREMENT"],
     [/^--/, "DECREMENT"],
@@ -54,6 +55,8 @@ export function tokenize(input: string): Token[] {
             tokens.push({ type, value: Number(result[0]) });
           } else if (type === "STRING") {
             tokens.push({ type, value: result[0].slice(1, -1) }); // sin comillas
+          } else if (type === "CHAR") {
+            tokens.push({ type, value: result[0].slice(1, -1) }); // sin comillas simples
           } else if (type === "LINE_COMMENT") {
             tokens.push({ type, value: result[0].slice(2).trim() }); // quita //
           } else if (type === "BLOCK_COMMENT") {
