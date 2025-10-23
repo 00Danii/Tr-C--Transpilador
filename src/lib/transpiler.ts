@@ -8,12 +8,64 @@ import { generatePhp } from "./php/generatePhp";
 import { tokenize as phpTokenize } from "./php/lexer";
 import { parse as phpParse } from "./php/parser";
 import { generateJava } from "./java/generateJava";
-import { java } from "@codemirror/lang-java";
 import { tokenize as javaTokenize } from "./java/lexer";
 import { parse as javaParse } from "./java/parser";
-// Import PSeInt modules
 import { tokenize as pseintTokenize } from "./pseint/lexer";
 import { parse as pseintParse } from "./pseint/parser";
+
+// Configuración de los lenguajes soportados
+type Token = any;
+type AST = any;
+type Generator = (ast: AST) => string;
+
+type LanguageConfigEntry = {
+  tokenize: (code: string) => Token;
+  parse: (tokens: Token) => AST;
+  generate: Record<string, Generator>;
+};
+
+const languageConfig: Record<string, LanguageConfigEntry> = {
+  javascript: {
+    tokenize: jsTokenize,
+    parse: jsParse,
+    generate: {
+      python: generatePython,
+      php: generatePhp,
+    },
+  },
+  python: {
+    tokenize: pyTokenize,
+    parse: pyParse,
+    generate: {
+      javascript: generateJs,
+      php: generatePhp,
+    },
+  },
+  php: {
+    tokenize: phpTokenize,
+    parse: phpParse,
+    generate: {
+      javascript: generateJs,
+      python: generatePython,
+    },
+  },
+  java: {
+    tokenize: javaTokenize,
+    parse: javaParse,
+    generate: {
+      javascript: generateJs,
+      python: generatePython,
+      php: generatePhp,
+    },
+  },
+  pseint: {
+    tokenize: pseintTokenize,
+    parse: pseintParse,
+    generate: {
+      python: generatePython,
+    },
+  },
+};
 
 export function transpileCode(
   code: string,
@@ -21,98 +73,24 @@ export function transpileCode(
   toLang: string
 ): string {
   try {
-    // js -> python
-    if (fromLang === "javascript" && toLang === "python") {
-      const tokens = jsTokenize(code);
-      console.log(tokens);
-      const ast = jsParse(tokens);
-      console.log(ast);
-      return generatePython(ast);
+    const fromConfig = languageConfig[fromLang as keyof typeof languageConfig];
+    if (!fromConfig) {
+      return `// Error: Lenguaje de origen '${fromLang}' no soportado.`;
     }
 
-    // python -> js
-    if (fromLang === "python" && toLang === "javascript") {
-      const tokens = pyTokenize(code);
-      console.log(tokens);
-      const ast = pyParse(tokens);
-      console.log(ast);
-      return generateJs(ast);
+    const generator =
+      fromConfig.generate[toLang as keyof typeof fromConfig.generate];
+    if (!generator) {
+      return "// Transpilación no soportada para estos lenguajes.";
     }
 
-    // js -> php
-    if (fromLang === "javascript" && toLang === "php") {
-      const tokens = jsTokenize(code);
-      console.log(tokens);
-      const ast = jsParse(tokens);
-      console.log(ast);
-      return generatePhp(ast);
-    }
+    const tokens = fromConfig.tokenize(code);
+    console.log(tokens);
 
-    // python -> php
-    if (fromLang === "python" && toLang === "php") {
-      const tokens = pyTokenize(code);
-      console.log(tokens);
-      const ast = pyParse(tokens);
-      console.log(ast);
-      return generatePhp(ast);
-    }
+    const ast = fromConfig.parse(tokens);
+    console.log(ast);
 
-    // php -> js
-    if (fromLang === "php" && toLang === "javascript") {
-      const tokens = phpTokenize(code);
-      console.log(tokens);
-      const ast = phpParse(tokens);
-      console.log(ast);
-      return generateJs(ast);
-    }
-
-    // php -> python
-    if (fromLang === "php" && toLang === "python") {
-      const tokens = phpTokenize(code);
-      console.log(tokens);
-      const ast = phpParse(tokens);
-      console.log(ast);
-      return generatePython(ast);
-    }
-
-    // java -> js
-    if (fromLang === "java" && toLang === "javascript") {
-      const tokens = javaTokenize(code);
-      console.log(tokens);
-      const ast = javaParse(tokens);
-      console.log(ast);
-      return generateJs(ast);
-    }
-
-    // java -> python
-    if (fromLang === "java" && toLang === "python") {
-      const tokens = javaTokenize(code);
-      console.log(tokens);
-      const ast = javaParse(tokens);
-      console.log(ast);
-      return generatePython(ast);
-    }
-
-    // java -> php
-    if (fromLang === "java" && toLang === "php") {
-      const tokens = javaTokenize(code);
-      console.log(tokens);
-      const ast = javaParse(tokens);
-      console.log(ast);
-      return generatePhp(ast);
-    }
-
-    // pseint -> python
-    if (fromLang === "pseint" && toLang === "python") {
-      const tokens = pseintTokenize(code);
-      console.log(tokens);
-      const ast = pseintParse(tokens);
-      console.log(ast);
-      return generatePython(ast);
-    }
-
-    // Otros casos...
-    return "// Transpilación no soportada para estos lenguajes.";
+    return generator(ast);
   } catch (err: any) {
     return `// Error: ${err.message}`;
   }
