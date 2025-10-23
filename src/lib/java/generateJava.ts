@@ -13,7 +13,10 @@ function isExecutable(node: Statement | Expression) {
 function inferType(node: Expression, typeMap: Map<string, string>): string {
   switch (node.type) {
     case "Literal":
-      if (typeof node.value === "string") return "String";
+      if (typeof node.value === "string") {
+        // Devuelve el TIPO de dato (char o String)
+        return node.value.length === 1 ? "char" : "String";
+      }
       if (typeof node.value === "number") {
         // Si tiene parte decimal, double; sino int
         return node.value % 1 === 0 ? "int" : "double";
@@ -24,13 +27,17 @@ function inferType(node: Expression, typeMap: Map<string, string>): string {
     case "BinaryExpression":
       const leftType = inferType(node.left, typeMap);
       const rightType = inferType(node.right, typeMap);
-      // Operaciones aritméticas: si cualquiera es double, resultado es double
+      // Concatenación: si incluye String o char, resultado es String
       if (
         node.operator === "+" &&
-        (leftType === "String" || rightType === "String")
+        (leftType === "String" ||
+          rightType === "String" ||
+          leftType === "char" ||
+          rightType === "char")
       ) {
         return "String";
       }
+      // Operaciones aritméticas: si cualquiera es double, resultado es double
       if (leftType === "double" || rightType === "double") {
         return "double";
       }
@@ -210,7 +217,12 @@ export function generateJava(node: Program | Statement | Expression): string {
         return node.name;
 
       case "Literal":
-        if (typeof node.value === "string") return `"${node.value}"`;
+        if (typeof node.value === "string") {
+          // Char usa comillas simples, String dobles
+          return node.value.length === 1
+            ? `'${node.value}'`
+            : `"${node.value}"`;
+        }
         if (typeof node.value === "boolean")
           return node.value ? "true" : "false";
         if (node.value === null) return "null";
