@@ -14,19 +14,25 @@ function inferType(node: Expression, typeMap: Map<string, string>): string {
   switch (node.type) {
     case "Literal":
       if (typeof node.value === "string") return "String";
-      if (typeof node.value === "number") return "int";
+      if (typeof node.value === "number") {
+        // Si tiene parte decimal, double; sino int
+        return node.value % 1 === 0 ? "int" : "double";
+      }
       if (typeof node.value === "boolean") return "boolean";
       return "Object";
 
     case "BinaryExpression":
       const leftType = inferType(node.left, typeMap);
       const rightType = inferType(node.right, typeMap);
-      // Operaciones aritméticas → int, concatenación → String
+      // Operaciones aritméticas: si cualquiera es double, resultado es double
       if (
         node.operator === "+" &&
         (leftType === "String" || rightType === "String")
       ) {
         return "String";
+      }
+      if (leftType === "double" || rightType === "double") {
+        return "double";
       }
       return leftType === "int" && rightType === "int" ? "int" : "Object";
 
