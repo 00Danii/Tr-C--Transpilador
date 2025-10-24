@@ -238,8 +238,8 @@ export function generateJava(node: Program | Statement | Expression): string {
       case "DoWhileStatement":
         return (
           `do {\n` +
-          node.body.map((s) => "  " + generateWithTypes(s)).join("") +
-          `} while (${generateWithTypes(node.test)});\n`
+          node.body.map((s) => "  " + generateWithTypes(s)).join("\n") +
+          `\n} while (${generateWithTypes(node.test)});\n`
         );
 
       case "CommentStatement":
