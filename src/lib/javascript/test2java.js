@@ -35,3 +35,8 @@ while (contador2 < 3) {
   console.log(contador2);
   contador2++;
 }
+
+// FOR
+for (let i = 2; i < 10;  i++) {
+  console.log(i)
+}
