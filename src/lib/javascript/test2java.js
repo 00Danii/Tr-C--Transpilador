@@ -40,3 +40,11 @@ while (contador2 < 3) {
 for (let i = 2; i < 10;  i++) {
   console.log(i)
 }
+
+// Do-WHILE
+let contador3 = 100;
+let pacman = ":v"
+do {
+  console.log(pacman);
+  contador3--;
+} while (contador3 >= 0)
