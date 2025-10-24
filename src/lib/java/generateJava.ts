@@ -144,17 +144,17 @@ export function generateJava(node: Program | Statement | Expression): string {
         code += node.consequent
           .map((s) => "  " + generateWithTypes(s))
           .join("");
-        code += "}\n";
+        code += "\n}\n";
         if (node.alternate) {
           if (
             node.alternate.type === "IfStatement" &&
             node.alternate.test.type === "Literal" &&
-            node.alternate.test.value === true
+            Boolean(node.alternate.test.value)
           ) {
             // else
             code += `else {\n${node.alternate.consequent
               .map((s) => "  " + generateWithTypes(s))
-              .join("")}}\n`;
+              .join("")}\n}\n`;
           } else if (node.alternate.type === "IfStatement") {
             // else if
             code += `else ${generateWithTypes(node.alternate)}`;
@@ -162,7 +162,7 @@ export function generateJava(node: Program | Statement | Expression): string {
             if (Array.isArray(node.alternate)) {
               code += `else {\n${node.alternate
                 .map((s) => "  " + generateWithTypes(s))
-                .join("")}}\n`;
+                .join("")}\n}\n`;
             } else {
               code += `else {\n  ${generateWithTypes(node.alternate)}\n}\n`;
             }
