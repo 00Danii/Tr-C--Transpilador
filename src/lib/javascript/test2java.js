@@ -18,3 +18,13 @@ s2 = "Adios"
 // CHAR
 c1 = 'a'
 c2 = 'bw'
+
+// IF ELSE IF ELSE
+let contador = 0;
+if (contador === 0) {
+  console.log("Contador en cero");
+} else if (contador > 0) {
+  console.log("Contador positivo");
+} else {
+  console.log("Contador negativo");
+}
