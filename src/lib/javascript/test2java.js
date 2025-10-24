@@ -17,7 +17,7 @@ s2 = "Adios"
 
 // CHAR
 c1 = 'a'
-c2 = 'bw'
+c2 = 'b'
 
 // IF ELSE IF ELSE
 let contador = 0;
