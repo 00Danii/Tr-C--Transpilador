@@ -228,8 +228,8 @@ export function generateJava(node: Program | Statement | Expression): string {
             )}; ${generateWithTypes(node.test)}; ${generateWithTypes(
               node.update
             ).replace(/;\s*$/, "")}) {\n` +
-            node.body.map((s) => "  " + generateWithTypes(s)).join("") +
-            "}\n"
+            node.body.map((s) => "  " + generateWithTypes(s)).join("\n") +
+            "\n}\n"
           );
         }
         return "// [NO SOPORTADO: for]\n";
