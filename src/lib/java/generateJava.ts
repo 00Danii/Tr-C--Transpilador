@@ -174,7 +174,7 @@ export function generateJava(node: Program | Statement | Expression): string {
       case "WhileStatement":
         return `while (${generateWithTypes(node.test)}) {\n${node.body
           .map((s) => "  " + generateWithTypes(s))
-          .join("")}}\n`;
+          .join("\n")}\n}\n`;
 
       case "ForStatement": {
         if (node.init && node.test && node.update) {
