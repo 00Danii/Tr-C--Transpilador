@@ -54,6 +54,16 @@ function inferType(node: Expression, typeMap: Map<string, string>): string {
       }
       return "Object";
 
+    case "ArrayExpression":
+      if (node.elements.length === 0) return "Object[]";
+      const elementTypes = node.elements.map((el) => inferType(el, typeMap));
+      const uniqueTypes = [...new Set(elementTypes)];
+      // Si todos los elementos son del mismo tipo, usa ese tipo; sino Object[]
+      if (uniqueTypes.length === 1) {
+        return `${uniqueTypes[0]}[]`;
+      }
+      return "Object[]";
+
     default:
       return "Object";
   }
@@ -112,6 +122,11 @@ function collectTypes(
     });
     if (node.defaultCase)
       node.defaultCase.forEach((s) => collectTypes(s, typeMap));
+  } else if (node?.type === "ArrayExpression") {
+    node.elements.forEach((el) => collectTypes(el, typeMap));
+  } else if (node?.type === "ArrayDeclaration") {
+    if (node.initialValue) collectTypes(node.initialValue, typeMap);
+    node.dimensions.forEach((dim) => collectTypes(dim, typeMap));
   }
 
   // Agrega más casos ...
@@ -340,6 +355,24 @@ export function generateJava(node: Program | Statement | Expression): string {
         code += `}\n`;
         return code;
       }
+
+      case "ArrayExpression":
+        const arrayType = inferType(node, typeMap);
+        const elementType = arrayType.replace("[]", "");
+        const elements = node.elements.map(generateWithTypes).join(", ");
+        return `new ${elementType}[]{${elements}}`;
+
+      case "ArrayDeclaration":
+        const declType = inferType(
+          node.initialValue || { type: "ArrayExpression", elements: [] },
+          typeMap
+        );
+        const baseType = declType.replace(/\[\]/g, "");
+        const dimensions = node.dimensions.map(generateWithTypes).join("][");
+        const init = node.initialValue
+          ? ` = ${generateWithTypes(node.initialValue)}`
+          : "";
+        return `${baseType}[][${dimensions}] ${node.name}${init};`;
 
       default:
         return "// [NO SOPORTADO]\n";
