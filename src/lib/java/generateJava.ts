@@ -104,6 +104,14 @@ function collectTypes(
     if (node.finalizer) node.finalizer.forEach((s) => collectTypes(s, typeMap));
   } else if (node?.type === "FunctionDeclaration") {
     node.body.forEach((s) => collectTypes(s, typeMap));
+  } else if (node?.type === "SwitchStatement") {
+    collectTypes(node.discriminant, typeMap);
+    node.cases.forEach((switchCase) => {
+      if (switchCase.test) collectTypes(switchCase.test, typeMap);
+      switchCase.consequent.forEach((s) => collectTypes(s, typeMap));
+    });
+    if (node.defaultCase)
+      node.defaultCase.forEach((s) => collectTypes(s, typeMap));
   }
 
   // Agrega más casos ...
@@ -306,6 +314,32 @@ export function generateJava(node: Program | Statement | Expression): string {
 
       case "BlockStatement":
         return node.body.map(generateWithTypes).join("\n");
+
+      case "SwitchStatement": {
+        let code = `switch (${generateWithTypes(node.discriminant)}) {\n`;
+        node.cases.forEach((switchCase) => {
+          if (switchCase.test === null) {
+            code += `  default:\n`;
+          } else {
+            code += `  case ${generateWithTypes(switchCase.test)}:\n`;
+          }
+          switchCase.consequent.forEach((stmt) => {
+            code += `    ${generateWithTypes(stmt)}\n`;
+          });
+          // Agregar break automáticamente para cada caso (común en Java)
+          code += `    break;\n`;
+        });
+        // Manejar defaultCase si existe (por si no está en cases)
+        if (node.defaultCase) {
+          code += `  default:\n`;
+          node.defaultCase.forEach((stmt) => {
+            code += `    ${generateWithTypes(stmt)}\n`;
+          });
+          code += `    break;\n`;
+        }
+        code += `}\n`;
+        return code;
+      }
 
       default:
         return "// [NO SOPORTADO]\n";
