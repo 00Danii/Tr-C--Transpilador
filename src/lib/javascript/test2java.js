@@ -48,3 +48,12 @@ do {
   console.log(pacman);
   contador3--;
 } while (contador3 >= 0)
+
+// TRY CATCH FINALLY
+try {
+  let x = 10 / 0;
+} catch (e) {
+  console.log("Capturado:" + e);
+} finally {
+  console.log("Bloque finally");
+}
