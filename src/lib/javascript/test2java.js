@@ -70,3 +70,25 @@ switch (dia) {
   default:
     console.log("Otro día");
 }
+
+// ARREGLOS
+// Arreglo con valores enteros
+let numeros = [1, 2, 3, 4, 5, 6, 7];
+
+// Arreglo con valores decimales
+let decimales = [1.1, 2.2, 3.3, 4.4];
+
+// Arreglo con valores booleanos
+let booleanos = [true, false, true];
+
+// Arreglo con valores de cadena
+let colores = ["Rojo", "Verde", "Azul"];
+
+// Arreglo de caracteres
+let chars = ['a', 'b', 'c', 'd'];
+
+// Arreglo mixto
+let mixto = [1, "Dos", 3.0, true, 'e'];
+
+// Arreglo vacío
+let vacio = [];
