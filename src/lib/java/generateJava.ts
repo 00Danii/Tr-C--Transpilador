@@ -127,6 +127,9 @@ function collectTypes(
   } else if (node?.type === "ArrayDeclaration") {
     if (node.initialValue) collectTypes(node.initialValue, typeMap);
     node.dimensions.forEach((dim) => collectTypes(dim, typeMap));
+  } else if (node?.type === "MemberExpression") {
+    collectTypes(node.object, typeMap);
+    collectTypes(node.property, typeMap);
   }
 
   // Agrega más casos ...
@@ -269,6 +272,18 @@ export function generateJava(node: Program | Statement | Expression): string {
         return `// ${node.value}`;
 
       case "CallExpression":
+        // console.log → System.out.println
+        if (
+          node.callee.type === "MemberExpression" &&
+          node.callee.object.type === "Identifier" &&
+          node.callee.object.name === "console" &&
+          node.callee.property.type === "Identifier" &&
+          node.callee.property.name === "log"
+        ) {
+          return `System.out.println(${node.arguments
+            .map(generateWithTypes)
+            .join(", ")})`;
+        }
         // print → System.out.println
         if (node.callee.type === "Identifier" && node.callee.name === "print") {
           return `System.out.println(${node.arguments
@@ -373,6 +388,19 @@ export function generateJava(node: Program | Statement | Expression): string {
           ? ` = ${generateWithTypes(node.initialValue)}`
           : "";
         return `${baseType}[][${dimensions}] ${node.name}${init};`;
+
+      case "MemberExpression":
+        if (node.computed) {
+          // Acceso a arreglo: arr[index]
+          return `${generateWithTypes(node.object)}[${generateWithTypes(
+            node.property
+          )}]`;
+        } else {
+          // Acceso a propiedad: obj.prop
+          return `${generateWithTypes(node.object)}.${generateWithTypes(
+            node.property
+          )}`;
+        }
 
       default:
         return "// [NO SOPORTADO]\n";
