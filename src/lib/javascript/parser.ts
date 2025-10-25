@@ -472,7 +472,8 @@ export function parse(tokens: Token[]): Program {
     consume("PUNCTUATION"); // (
     const args: Expression[] = [];
     while (peek() && !(peek().type === "PUNCTUATION" && peek().value === ")")) {
-      args.push(parseExpression());
+      const arg = parseExpression();
+      args.push(arg);
       if (peek() && peek().type === "PUNCTUATION" && peek().value === ",") {
         consume("PUNCTUATION");
       }
@@ -560,25 +561,25 @@ export function parse(tokens: Token[]): Program {
   function parsePrimary(): Expression {
     const token = peek();
 
-    // Soporte para identificadores y acceso a propiedades: obj.prop
-    if (token.type === "IDENTIFIER") {
-      const name = String(consume("IDENTIFIER").value);
+    // // Soporte para identificadores y acceso a propiedades: obj.prop
+    // if (token.type === "IDENTIFIER") {
+    //   const name = String(consume("IDENTIFIER").value);
 
-      // Verificar si es acceso a propiedad: obj.prop
-      if (peek() && peek().type === "PUNCTUATION" && peek().value === ".") {
-        consume("PUNCTUATION"); // .
-        const property = String(consume("IDENTIFIER").value);
+    //   // Verificar si es acceso a propiedad: obj.prop
+    //   if (peek() && peek().type === "PUNCTUATION" && peek().value === ".") {
+    //     consume("PUNCTUATION"); // .
+    //     const property = String(consume("IDENTIFIER").value);
 
-        return {
-          type: "MemberExpression",
-          object: { type: "Identifier", name },
-          property: { type: "Identifier", name: property },
-          computed: false,
-        } as any;
-      }
+    //     return {
+    //       type: "MemberExpression",
+    //       object: { type: "Identifier", name },
+    //       property: { type: "Identifier", name: property },
+    //       computed: false,
+    //     } as any;
+    //   }
 
-      return { type: "Identifier", name };
-    }
+    //   return { type: "Identifier", name };
+    // }
 
     // SOPORTE PARA THIS
     if (token.type === "THIS") {
@@ -700,16 +701,34 @@ export function parse(tokens: Token[]): Program {
       consume();
       let expr: Expression = { type: "Identifier", name: String(token.value) };
 
-      // Soporte para acceso a arreglo: arr[0]
-      while (peek() && peek().type === "PUNCTUATION" && peek().value === "[") {
-        consume("PUNCTUATION"); // [
-        const property = parseExpression();
-        consume("PUNCTUATION"); // ]
-        expr = {
-          type: "MemberExpression",
-          object: expr,
-          property,
-        };
+      // Loop unificado para acceso a miembros (. y [])
+      while (true) {
+        if (peek() && peek().type === "PUNCTUATION" && peek().value === ".") {
+          consume("PUNCTUATION"); // .
+          const property = consume("IDENTIFIER");
+          expr = {
+            type: "MemberExpression",
+            object: expr,
+            property: { type: "Identifier", name: String(property.value) },
+            computed: false,
+          };
+        } else if (
+          peek() &&
+          peek().type === "PUNCTUATION" &&
+          peek().value === "["
+        ) {
+          consume("PUNCTUATION"); // [
+          const property = parseExpression();
+          consume("PUNCTUATION"); // ]
+          expr = {
+            type: "MemberExpression",
+            object: expr,
+            property,
+            computed: true,
+          };
+        } else {
+          break;
+        }
       }
 
       // Llamada a función
