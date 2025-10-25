@@ -285,21 +285,21 @@ export function generateJava(node: Program | Statement | Expression): string {
 
       case "TryStatement": {
         let code = "try {\n";
-        code += node.block.map((s) => "  " + generateWithTypes(s)).join("");
-        code += "}\n";
+        code += node.block.map((s) => "  " + generateWithTypes(s)).join("\n");
+        code += "\n}\n";
         if (node.handler) {
           code += `catch (Exception ${node.handler.param.name}) {\n`;
           code += node.handler.body
             .map((s) => "  " + generateWithTypes(s))
-            .join("");
-          code += "}\n";
+            .join("\n");
+          code += "\n}\n";
         }
         if (node.finalizer) {
           code += "finally {\n";
           code += node.finalizer
             .map((s) => "  " + generateWithTypes(s))
-            .join("");
-          code += "}\n";
+            .join("\n");
+          code += "\n}\n";
         }
         return code;
       }
