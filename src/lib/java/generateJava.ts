@@ -55,6 +55,11 @@ function inferType(node: Expression, typeMap: Map<string, string>): string {
       return "Object";
 
     case "ArrayExpression":
+      // Si contiene ArrayKeyValue, es un objeto literal → Map
+      if (node.elements.some((el) => el.type === "ArrayKeyValue")) {
+        return "Map<String, Object>";
+      }
+      // Sino, es un arreglo normal
       if (node.elements.length === 0) return "Object[]";
       const elementTypes = node.elements.map((el) => inferType(el, typeMap));
       const uniqueTypes = [...new Set(elementTypes)];
@@ -77,7 +82,8 @@ function collectTypes(
   if (node?.type === "VariableDeclaration") {
     const inferredType = inferType(node.value, typeMap);
     typeMap.set(node.name, inferredType);
-  } else if (
+  }
+  if (
     node?.type === "ExpressionStatement" &&
     node.expression.type === "BinaryExpression" &&
     node.expression.operator === "=" &&
@@ -86,7 +92,8 @@ function collectTypes(
     const varName = node.expression.left.name;
     const inferredType = inferType(node.expression.right, typeMap);
     typeMap.set(varName, inferredType);
-  } else if (node?.type === "IfStatement") {
+  }
+  if (node?.type === "IfStatement") {
     collectTypes(node.test, typeMap);
     node.consequent.forEach((s) => collectTypes(s, typeMap));
     if (node.alternate) {
@@ -96,25 +103,31 @@ function collectTypes(
         collectTypes(node.alternate, typeMap);
       }
     }
-  } else if (node?.type === "WhileStatement") {
+  }
+  if (node?.type === "WhileStatement") {
     collectTypes(node.test, typeMap);
     node.body.forEach((s) => collectTypes(s, typeMap));
-  } else if (node?.type === "ForStatement") {
+  }
+  if (node?.type === "ForStatement") {
     if (node.init) collectTypes(node.init, typeMap);
     if (node.test) collectTypes(node.test, typeMap);
     if (node.update) collectTypes(node.update, typeMap);
     node.body.forEach((s) => collectTypes(s, typeMap));
-  } else if (node?.type === "DoWhileStatement") {
+  }
+  if (node?.type === "DoWhileStatement") {
     collectTypes(node.test, typeMap);
     node.body.forEach((s) => collectTypes(s, typeMap));
-  } else if (node?.type === "TryStatement") {
+  }
+  if (node?.type === "TryStatement") {
     node.block.forEach((s) => collectTypes(s, typeMap));
     if (node.handler)
       node.handler.body.forEach((s) => collectTypes(s, typeMap));
     if (node.finalizer) node.finalizer.forEach((s) => collectTypes(s, typeMap));
-  } else if (node?.type === "FunctionDeclaration") {
+  }
+  if (node?.type === "FunctionDeclaration") {
     node.body.forEach((s) => collectTypes(s, typeMap));
-  } else if (node?.type === "SwitchStatement") {
+  }
+  if (node?.type === "SwitchStatement") {
     collectTypes(node.discriminant, typeMap);
     node.cases.forEach((switchCase) => {
       if (switchCase.test) collectTypes(switchCase.test, typeMap);
@@ -122,17 +135,43 @@ function collectTypes(
     });
     if (node.defaultCase)
       node.defaultCase.forEach((s) => collectTypes(s, typeMap));
-  } else if (node?.type === "ArrayExpression") {
-    node.elements.forEach((el) => collectTypes(el, typeMap));
-  } else if (node?.type === "ArrayDeclaration") {
+  }
+  if (node?.type === "ArrayDeclaration") {
     if (node.initialValue) collectTypes(node.initialValue, typeMap);
     node.dimensions.forEach((dim) => collectTypes(dim, typeMap));
-  } else if (node?.type === "MemberExpression") {
+  }
+  if (node?.type === "MemberExpression") {
     collectTypes(node.object, typeMap);
     collectTypes(node.property, typeMap);
   }
+  if (node?.type === "ArrayExpression") {
+    // Para objetos, recolectar tipos de valores
+    if (node.elements.some((el) => el.type === "ArrayKeyValue")) {
+      node.elements.forEach((el) => {
+        if (el.type === "ArrayKeyValue") collectTypes(el.value, typeMap);
+      });
+    } else {
+      // Para arreglos normales
+      node.elements.forEach((el) => collectTypes(el, typeMap));
+    }
+  }
 
   // Agrega más casos ...
+}
+
+// Función helper para detectar objetos literales
+function hasObjectLiterals(node: Program | Statement | Expression): boolean {
+  if (node?.type === "ArrayExpression") {
+    return node.elements.some((el) => el.type === "ArrayKeyValue");
+  }
+  if (node?.type === "Program") {
+    return node.body.some(hasObjectLiterals);
+  }
+  if (node?.type === "VariableDeclaration") {
+    return hasObjectLiterals(node.value);
+  }
+  // Agrega más casos si es necesario
+  return false;
 }
 
 export function generateJava(node: Program | Statement | Expression): string {
@@ -146,6 +185,9 @@ export function generateJava(node: Program | Statement | Expression): string {
   // Función interna recursiva que usa el typeMap
   function generateWithTypes(node: Program | Statement | Expression): string {
     if (node?.type === "Program") {
+      // Verificar si hay objetos literales en el AST
+      const hasObjects = hasObjectLiterals(node);
+
       // Separa definiciones y ejecutables
       const definitions = node.body.filter(isDefinition);
       const executables = node.body.filter(isExecutable);
@@ -156,7 +198,13 @@ export function generateJava(node: Program | Statement | Expression): string {
       // Código ejecutable dentro de main
       const mainBody = executables.map(generateWithTypes).join("\n");
 
+      // Importaciones si hay objetos
+      const imports = hasObjects
+        ? "import java.util.Map;\nimport java.util.HashMap;\n\n"
+        : "";
+
       return (
+        imports +
         "public class Main {\n" +
         (methods ? methods + "\n\n" : "") +
         "  public static void main(String[] args) {\n" +
@@ -182,6 +230,28 @@ export function generateJava(node: Program | Statement | Expression): string {
 
       case "VariableDeclaration":
         const varType = typeMap.get(node.name) || "Object";
+        if (varType === "Map<String, Object>") {
+          // Generar código especial para objetos literales
+          const mapLines: string[] = [];
+          if (node.value.type === "ArrayExpression") {
+            node.value.elements.forEach((el) => {
+              if (el.type === "ArrayKeyValue") {
+                // Claves: si es Identifier, agregar comillas; si es Literal, usar generateWithTypes
+                const key =
+                  el.key.type === "Identifier"
+                    ? `"${el.key.name}"`
+                    : generateWithTypes(el.key);
+                const value = generateWithTypes(el.value);
+                mapLines.push(`${node.name}.put(${key}, ${value});`);
+              }
+            });
+          }
+          return `// Crear un mapa (clave-valor)\n${varType} ${
+            node.name
+          } = new HashMap<>();\n// Asignar claves y valores\n${mapLines.join(
+            "\n"
+          )}`;
+        }
         return `${varType} ${node.name} = ${generateWithTypes(node.value)};`;
 
       case "ExpressionStatement":
@@ -390,7 +460,13 @@ export function generateJava(node: Program | Statement | Expression): string {
         return `${baseType}[][${dimensions}] ${node.name}${init};`;
 
       case "MemberExpression":
-        if (node.computed) {
+        const objType = inferType(node.object, typeMap);
+        if (node.computed && objType === "Map<String, Object>") {
+          // Acceso a Map: map.get(key)
+          return `${generateWithTypes(node.object)}.get(${generateWithTypes(
+            node.property
+          )})`;
+        } else if (node.computed) {
           // Acceso a arreglo: arr[index]
           return `${generateWithTypes(node.object)}[${generateWithTypes(
             node.property
