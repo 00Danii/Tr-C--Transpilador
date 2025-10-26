@@ -92,3 +92,13 @@ let mixto = [1, "Dos", 3.0, true, 'e'];
 
 // Arreglo vacío
 let vacio = [];
+
+// Objetos Literales
+const persona = {
+  nombre: "Nombre", 
+  edad: 25, 
+  pais: "México",
+  inicial: 'N',
+  vivo: false
+};
+console.log(persona["edad"]);
