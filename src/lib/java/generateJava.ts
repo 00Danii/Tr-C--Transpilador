@@ -275,7 +275,28 @@ export function generateJava(node: Program | Statement | Expression): string {
               // No declarada, declarar con tipo inferido
               const inferredType = inferType(node.expression.right, typeMap);
               typeMap.set(varName, inferredType);
-              return `${inferredType} ${varName} = ${rightCode};`;
+              if (inferredType === "Map<String, Object>") {
+                // Generar código especial para objetos literales
+                const mapLines: string[] = [];
+                if (node.expression.right.type === "ArrayExpression") {
+                  node.expression.right.elements.forEach((el) => {
+                    if (el.type === "ArrayKeyValue") {
+                      // Claves: si es Identifier, agregar comillas; si es Literal, usar generateWithTypes
+                      const key =
+                        el.key.type === "Identifier"
+                          ? `"${el.key.name}"`
+                          : generateWithTypes(el.key);
+                      const value = generateWithTypes(el.value);
+                      mapLines.push(`${varName}.put(${key}, ${value});`);
+                    }
+                  });
+                }
+                return `// Crear un mapa (clave-valor)\n${inferredType} ${varName} = new HashMap<>();\n// Asignar claves y valores\n${mapLines.join(
+                  "\n"
+                )}`;
+              } else {
+                return `${inferredType} ${varName} = ${rightCode};`;
+              }
             }
           }
         }
