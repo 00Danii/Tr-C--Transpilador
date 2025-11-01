@@ -28,7 +28,7 @@ export function tokenize(input: string): Token[] {
     [/^\bfinally\b/, "FINALLY"],
     [/^\bException\b/, "EXCEPTION"],
     [/^\$\w+/, "VARIABLE"],
-    [/^\d+(\.\d+)?/, "NUMBER"],
+    [/^-?\d+(\.\d+)?/, "NUMBER"],
     [/^"([^"\\]|\\.)*"/, "STRING"],
     [/^'([^'\\]|\\.)*'/, "STRING"],
     [/^\bclass\b/, "CLASS"],
