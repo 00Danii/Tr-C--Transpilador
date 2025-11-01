@@ -427,8 +427,17 @@ export function generateCpp(node: Program | Statement | Expression): string {
         code += "\n}\n";
         if (node.handler) {
           code += `catch (std::exception ${node.handler.param.name}) {\n`;
+          // Reemplazar el param name con .what() en el body
+          const paramName = node.handler.param.name;
           code += node.handler.body
-            .map((s) => "  " + generateWithTypes(s))
+            .map(
+              (s) =>
+                "  " +
+                generateWithTypes(s).replace(
+                  new RegExp(`\\b${paramName}\\b`, "g"),
+                  `${paramName}.what()`
+                )
+            )
             .join("\n");
           code += "\n}\n";
         }
