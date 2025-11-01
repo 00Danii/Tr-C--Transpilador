@@ -83,16 +83,19 @@ function collectTypes(
     const inferredType = inferType(node.value, typeMap);
     typeMap.set(node.name, inferredType);
   }
-  if (
-    node?.type === "ExpressionStatement" &&
-    node.expression.type === "BinaryExpression" &&
-    node.expression.operator === "=" &&
-    node.expression.left.type === "Identifier"
-  ) {
-    const varName = node.expression.left.name;
-    const inferredType = inferType(node.expression.right, typeMap);
-    typeMap.set(varName, inferredType);
-  }
+  // REMOVIDO:
+  // Para que identifique por primera aparición
+  // en el flujo de generación (no en el AST completo)
+  // if (
+  //   node?.type === "ExpressionStatement" &&
+  //   node.expression.type === "BinaryExpression" &&
+  //   node.expression.operator === "=" &&
+  //   node.expression.left.type === "Identifier"
+  // ) {
+  //   const varName = node.expression.left.name;
+  //   const inferredType = inferType(node.expression.right, typeMap);
+  //   typeMap.set(varName, inferredType);
+  // }
   if (node?.type === "IfStatement") {
     collectTypes(node.test, typeMap);
     node.consequent.forEach((s) => collectTypes(s, typeMap));
