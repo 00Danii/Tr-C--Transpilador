@@ -283,7 +283,25 @@ export function generateCpp(node: Program | Statement | Expression): string {
             } else {
               const inferredType = inferType(node.expression.right, typeMap);
               typeMap.set(varName, inferredType);
-              return `${inferredType} ${varName} = ${rightCode};`;
+              if (inferredType.startsWith("map<")) {
+                // Generar inserts para objetos literales
+                const mapLines: string[] = [];
+                if (node.expression.right.type === "ArrayExpression") {
+                  node.expression.right.elements.forEach((el) => {
+                    if (el.type === "ArrayKeyValue") {
+                      const key =
+                        el.key.type === "Identifier"
+                          ? `"${el.key.name}"`
+                          : generateWithTypes(el.key);
+                      const value = generateWithTypes(el.value);
+                      mapLines.push(`${varName}.insert({${key}, ${value}});`);
+                    }
+                  });
+                }
+                return `${inferredType} ${varName};\n${mapLines.join("\n")}`;
+              } else {
+                return `${inferredType} ${varName} = ${rightCode};`;
+              }
             }
           }
         }
