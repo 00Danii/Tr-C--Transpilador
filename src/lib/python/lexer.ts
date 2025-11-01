@@ -21,7 +21,7 @@ export function tokenize(input: string): Token[] {
     [/^\bFalse\b/, "FALSE"],
     [/^\bNone\b/, "NONE"],
     [/^\bnot\b/, "OPERATOR"],
-    [/^\b\d+\b/, "NUMBER"],
+    [/^\b-?\d+(\.\d+)?\b/, "NUMBER"],
     [/^"[^"]*"/, "STRING"],
     [/^'[^']*'/, "STRING"],
     [/^\blambda\b/, "LAMBDA"],
