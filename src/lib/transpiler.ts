@@ -12,7 +12,7 @@ import { tokenize as javaTokenize } from "./java/lexer";
 import { parse as javaParse } from "./java/parser";
 import { tokenize as pseintTokenize } from "./pseint/lexer";
 import { parse as pseintParse } from "./pseint/parser";
-import { java } from "@codemirror/lang-java";
+import { generateCpp } from "./cpp/generateCpp";
 
 // Configuración de los lenguajes soportados
 type Token = any;
@@ -33,6 +33,7 @@ const languageConfig: Record<string, LanguageConfigEntry> = {
       python: generatePython,
       php: generatePhp,
       java: generateJava,
+      cpp: generateCpp,
     },
   },
   python: {
