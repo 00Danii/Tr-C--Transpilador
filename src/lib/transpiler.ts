@@ -41,6 +41,7 @@ const languageConfig: Record<string, LanguageConfigEntry> = {
     generate: {
       javascript: generateJs,
       php: generatePhp,
+      java: generateJava,
     },
   },
   php: {
@@ -49,6 +50,7 @@ const languageConfig: Record<string, LanguageConfigEntry> = {
     generate: {
       javascript: generateJs,
       python: generatePython,
+      java: generateJava,
     },
   },
   java: {
