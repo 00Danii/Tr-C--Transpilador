@@ -13,6 +13,7 @@ import { parse as javaParse } from "./java/parser";
 import { tokenize as pseintTokenize } from "./pseint/lexer";
 import { parse as pseintParse } from "./pseint/parser";
 import { generateCpp } from "./cpp/generateCpp";
+import { cpp } from "@codemirror/lang-cpp";
 
 // Configuración de los lenguajes soportados
 type Token = any;
@@ -43,6 +44,7 @@ const languageConfig: Record<string, LanguageConfigEntry> = {
       javascript: generateJs,
       php: generatePhp,
       java: generateJava,
+      cpp: generateCpp,
     },
   },
   php: {
@@ -52,6 +54,7 @@ const languageConfig: Record<string, LanguageConfigEntry> = {
       javascript: generateJs,
       python: generatePython,
       java: generateJava,
+      cpp: generateCpp,
     },
   },
   java: {
