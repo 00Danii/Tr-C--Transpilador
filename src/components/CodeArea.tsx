@@ -11,6 +11,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
 import { php } from "@codemirror/lang-php";
 import { java } from "@codemirror/lang-java";
+import { cpp } from "@codemirror/lang-cpp";
 
 interface Props {
   title: React.ReactNode;
@@ -54,6 +55,8 @@ export function CodeArea({
         return php();
       case "java":
         return java();
+      case "c++":
+        return cpp();
       default:
         return javascript();
     }
