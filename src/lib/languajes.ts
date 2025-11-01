@@ -18,6 +18,12 @@ export const PROGRAMMING_LANGUAGES = [
     gradient: "from-green-400 to-green-600",
   },
   {
+    value: "cpp",
+    label: "C++",
+    color: "bg-blue-600",
+    gradient: "from-blue-500 to-blue-700",
+  },
+  {
     value: "java",
     label: "Java",
     color: "bg-orange-500",
@@ -29,12 +35,7 @@ export const PROGRAMMING_LANGUAGES = [
   //   color: "bg-purple-500",
   //   gradient: "from-purple-400 to-purple-600",
   // },
-  // {
-  //   value: "cpp",
-  //   label: "C++",
-  //   color: "bg-blue-600",
-  //   gradient: "from-blue-500 to-blue-700",
-  // },
+
   // {
   //   value: "go",
   //   label: "Go",
