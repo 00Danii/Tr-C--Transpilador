@@ -323,9 +323,15 @@ export function generateCpp(node: Program | Statement | Expression): string {
         return node.name;
 
       case "BinaryExpression":
-        return `${generateWithTypes(node.left)} ${
-          node.operator
-        } ${generateWithTypes(node.right)}`;
+        const operatorMap: { [key: string]: string } = {
+          "===": "==",
+          "!==": "!=",
+          // ... 
+        };
+        const op = operatorMap[node.operator] || node.operator;
+        return `${generateWithTypes(node.left)} ${op} ${generateWithTypes(
+          node.right
+        )}`;
 
       case "UnaryExpression":
         return `${node.operator}${generateWithTypes(node.argument)}`;
