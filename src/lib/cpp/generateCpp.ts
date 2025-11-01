@@ -187,6 +187,31 @@ export function generateCpp(node: Program | Statement | Expression): string {
     node.body.forEach((stmt) => collectTypes(stmt, typeMap));
   }
 
+  // Función helper para generar expresiones en contexto de cout (convierte + a << para strings)
+  function generateForCout(
+    node: Expression,
+    typeMap: Map<string, string>
+  ): string {
+    if (node.type === "BinaryExpression" && node.operator === "+") {
+      const leftType = inferType(node.left, typeMap);
+      const rightType = inferType(node.right, typeMap);
+      if (
+        leftType === "string" ||
+        rightType === "string" ||
+        leftType === "char" ||
+        rightType === "char"
+      ) {
+        // Convertir + a << para concatenación en cout
+        return `${generateForCout(node.left, typeMap)} << ${generateForCout(
+          node.right,
+          typeMap
+        )}`;
+      }
+    }
+    // Para otros casos, usar generateWithTypes normal
+    return generateWithTypes(node);
+  }
+
   function generateWithTypes(node: Program | Statement | Expression): string {
     if (node?.type === "Program") {
       const hasObjects = hasObjectLiterals(node);
@@ -273,12 +298,12 @@ export function generateCpp(node: Program | Statement | Expression): string {
           node.callee.property.name === "log"
         ) {
           return `cout << ${node.arguments
-            .map(generateWithTypes)
+            .map((arg) => generateForCout(arg, typeMap))
             .join(" << ")} << endl`;
         }
         if (node.callee.type === "Identifier" && node.callee.name === "print") {
           return `cout << ${node.arguments
-            .map(generateWithTypes)
+            .map((arg) => generateForCout(arg, typeMap))
             .join(" << ")} << endl`;
         }
         return `${generateWithTypes(node.callee)}(${node.arguments
@@ -326,7 +351,7 @@ export function generateCpp(node: Program | Statement | Expression): string {
         const operatorMap: { [key: string]: string } = {
           "===": "==",
           "!==": "!=",
-          // ... 
+          // ...
         };
         const op = operatorMap[node.operator] || node.operator;
         return `${generateWithTypes(node.left)} ${op} ${generateWithTypes(
