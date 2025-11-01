@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "dev:android": "pnpm tauri android dev",
+    "build:android": "pnpm tauri android build"
   },
   "dependencies": {
     "@codemirror/lang-cpp": "^6.0.3",
