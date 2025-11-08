@@ -72,10 +72,10 @@ export const PROGRAMMING_LANGUAGES = [
   //   color: "bg-purple-600",
   //   gradient: "from-purple-500 to-purple-700",
   // },
-  {
-    value: "pseint",
-    label: "PSeInt",
-    color: "bg-purple-500",
-    gradient: "from-purple-500 to-purple-700",
-  },
+  // {
+  //   value: "pseint",
+  //   label: "PSeInt",
+  //   color: "bg-purple-500",
+  //   gradient: "from-purple-500 to-purple-700",
+  // },
 ];
