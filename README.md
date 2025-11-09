@@ -93,7 +93,11 @@ Este sistema analiza el **AST** y deduce el tipo más probable de cada variable 
 
 | Estructura | Ejemplo fuente | Tipo inferido en Java | Tipo inferido en C++ |
 |-------------|----------------|------------------------|-----------------------|
-| Arreglo homogéneo | `[1, 2, 3]` | `int[]` | `vector<int>` |
+| Arreglo de enteros | `[1, 2, 3]` | `int[]` | `vector<int>` |
+| Arreglo de decimales | `[1.5, 2.0, 3.7]` | `double[]` | `vector<double>` |
+| Arreglo de caracteres | `['a', 'b', 'c']` | `char[]` | `vector<char>` |
+| Arreglo de booleanos | `[true, false, true]` | `boolean[]` | `vector<bool>` |
+| Arreglo de cadenas | `["uno", "dos", "tres"]` | `String[]` | `vector<string>` |
 | Arreglo mixto | `[1, "hola", true]` | `Object[]` | `vector<variant<int, string, bool>>` |
 | Objeto literal | `{"key": "value"}` | `Map<String, Object>` | `map<string, variant<...>>` |
 
